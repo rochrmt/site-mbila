@@ -668,9 +668,11 @@ export default function Editor({
                   <p className="mt-3 text-xs leading-relaxed">
                     {isPaid
                       ? <span className="text-emerald-300/80">Abonnement actif jusqu&apos;au {new Date(site.paidUntil!).toLocaleDateString("fr-FR")} · <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">Renouveler / changer d&apos;offre →</Link></span>
-                      : pendingPayment
-                        ? <span className="text-amber-300/80">Paiement en cours de vérification, le site passe en ligne à la confirmation.</span>
-                        : <span className="text-white/40">Publication : {price.original && <span className="line-through">{price.original.toLocaleString("fr-FR")}</span>} <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">{price.monthly.toLocaleString("fr-FR")} FCFA/mois →</Link>{price.label && <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">🏷️ {price.label}</span>}</span>}
+                      : site.paidUntil
+                        ? <span className="text-red-300/80">Abonnement expiré le {new Date(site.paidUntil).toLocaleDateString("fr-FR")} — le site n&apos;est plus visible. <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">Renouveler pour le remettre en ligne →</Link></span>
+                        : pendingPayment
+                          ? <span className="text-amber-300/80">Paiement en cours de vérification, le site passe en ligne à la confirmation.</span>
+                          : <span className="text-white/40">Publication : {price.original && <span className="line-through">{price.original.toLocaleString("fr-FR")}</span>} <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">{price.monthly.toLocaleString("fr-FR")} FCFA/mois →</Link>{price.label && <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">🏷️ {price.label}</span>}</span>}
                   </p>
                 </div>
                 <div className="rounded-xl border border-white/10 p-4">
