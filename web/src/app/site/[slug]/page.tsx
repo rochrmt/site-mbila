@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getSiteBySlug, siteIsPaid } from "@/lib/db";
+import { getSiteBySlug, siteIsPaid, activeDomainForSite } from "@/lib/db";
+import { redirect } from "next/navigation";
 import { templateById } from "@/templates/all";
 import SiteRenderer from "@/templates/render/SiteRenderer";
 import ExpiredSite from "@/components/ExpiredSite";
@@ -22,6 +23,11 @@ export async function generateMetadata({ params }: PageProps<"/site/[slug]">): P
 export default async function PublicSite({ params }: PageProps<"/site/[slug]">) {
   const site = getSiteBySlug((await params).slug);
   if (!site?.published || site.suspended) notFound();
+  // Sous-domaine coupé par l'admin → redirige vers le domaine perso actif
+  if (site.subdomain_off) {
+    const dom = activeDomainForSite(site.id);
+    if (dom) redirect(`https://${dom.domain}/`);
+  }
   // Abonnement expiré : page neutre « indisponible » (pas 404 — le site revient au renouvellement)
   if (!siteIsPaid(site)) return <ExpiredSite name={site.data.name} />;
   return (

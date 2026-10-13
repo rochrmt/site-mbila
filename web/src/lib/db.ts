@@ -112,6 +112,8 @@ export function getDb() {
   // Mise en avant sur la page d'accueil (choisie par l'admin)
   try { db.exec("ALTER TABLE sites ADD COLUMN featured_carousel INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà présente */ }
   try { db.exec("ALTER TABLE sites ADD COLUMN featured_example INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà présente */ }
+  // Coupe l'adresse slug.mbila.ca quand un domaine perso actif existe (admin)
+  try { db.exec("ALTER TABLE sites ADD COLUMN subdomain_off INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà présente */ }
   // Inscription par téléphone : colonne phone (+ email devient optionnel).
   // Doit tourner AVANT les ALTER users ci-dessous : la recréation de la table
   // supprimerait sinon must_change / email_verified sur une base fraîche.
@@ -317,6 +319,7 @@ export type SiteRow = {
   suspended: boolean;
   paid_until: string | null;
   category?: string | null;
+  subdomain_off?: number;
   updated_at: string;
 };
 
@@ -685,6 +688,17 @@ export function getCustomDomain(domain: string): CustomDomain | null {
 
 export function setCustomDomainStatus(id: number, status: DomainStatus) {
   getDb().prepare("UPDATE custom_domains SET status = ? WHERE id = ?").run(status, id);
+}
+
+// Domaine perso actif d'un site (pour rediriger slug.mbila.ca → domaine)
+export function activeDomainForSite(siteId: number): CustomDomain | null {
+  const r = getDb().prepare("SELECT * FROM custom_domains WHERE site_id = ? AND status = 'actif' ORDER BY id DESC LIMIT 1").get(siteId) as CustomDomain | undefined;
+  return r ? { ...r } : null;
+}
+
+// Coupe/rétablit l'adresse slug.mbila.ca d'un site (admin)
+export function setSubdomainOff(siteId: number, off: boolean) {
+  getDb().prepare("UPDATE sites SET subdomain_off = ? WHERE id = ?").run(off ? 1 : 0, siteId);
 }
 
 // Site servi sous un domaine perso actif (accepte www.<domaine>)

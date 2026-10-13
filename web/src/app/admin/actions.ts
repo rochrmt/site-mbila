@@ -12,7 +12,7 @@ import { DATA_DIR } from "@/lib/config";
 import {
   addStockImage, confirmPayment, deleteCustomTemplate, deleteHostingRequest, deleteSite, deleteStockImage, getCustomDomain,
   getDb, getHostingRequest, getPayment, getSiteById, getUserById, HOSTING_STATUS, notify, saveCustomTemplate,
-  adminResetPassword, getPasswordResets, setCustomDomainStatus, setEmailVerified, setPasswordResetStatus, setPaymentStatus, setPlanPrice,
+  adminResetPassword, getPasswordResets, setCustomDomainStatus, setEmailVerified, setPasswordResetStatus, setPaymentStatus, setPlanPrice, setSubdomainOff,
   setSiteFeatured, updateHostingRequest, updateSite,
   type FeatureSlot, type HostingStatus,
 } from "@/lib/db";
@@ -173,6 +173,16 @@ export async function activateDomainAction(form: FormData) {
   setCustomDomainStatus(row.id, "actif");
   updateHostingRequest(id, { status: "en_ligne", note: `${r.note ? r.note + "\n" : ""}${dns}` });
   notify(r.user_id, `Votre domaine ${r.domain} est en ligne !`, `https://${r.domain}`);
+  revalidatePath("/admin/hebergement");
+}
+
+// Coupe ou rétablit l'adresse slug.mbila.ca d'un site (le domaine perso reste l'adresse principale)
+export async function toggleSubdomainAction(form: FormData) {
+  await requireAdmin();
+  const siteId = Number(form.get("site_id"));
+  const off = form.get("off") === "1";
+  if (!siteId) return;
+  setSubdomainOff(siteId, off);
   revalidatePath("/admin/hebergement");
 }
 

@@ -1,6 +1,6 @@
 import { CheckCircle2, Download, FileArchive, GitBranch, Globe, Mail, MessageCircle, Trash2, XCircle } from "lucide-react";
-import { activateDomainAction, deactivateDomainAction, deleteHostingAction, refuseDomainAction, updateHostingAction } from "../actions";
-import { getCustomDomain, getHostingRequests, HOSTING_STATUS, type HostingStatus } from "@/lib/db";
+import { activateDomainAction, deactivateDomainAction, deleteHostingAction, refuseDomainAction, toggleSubdomainAction, updateHostingAction } from "../actions";
+import { getCustomDomain, getHostingRequests, getSiteById, HOSTING_STATUS, type HostingStatus } from "@/lib/db";
 
 const fmt = (iso: string) =>
   new Date(iso + "Z").toLocaleString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -35,6 +35,8 @@ export default async function AdminHosting() {
         {list.map((r) => {
           const wa = r.phone.replace(/\D/g, "");
           const dom = r.stack === "Domaine perso" && r.domain ? getCustomDomain(r.domain) : null;
+          const site = r.site_id ? getSiteById(r.site_id) : null;
+          const subOff = !!site?.subdomain_off;
           return (
             <div key={r.id} className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
               <div className="flex flex-wrap items-center gap-3 border-b border-white/5 px-6 py-4">
@@ -92,12 +94,23 @@ export default async function AdminHosting() {
                           </form>
                         )}
                         {dom.status === "actif" && (
-                          <form action={deactivateDomainAction}>
-                            <input type="hidden" name="id" value={r.id} />
-                            <button className="flex items-center gap-1 rounded-lg bg-white/5 px-3 py-1.5 text-xs text-white/50 transition hover:bg-white/10">
-                              Désactiver
-                            </button>
-                          </form>
+                          <>
+                            {r.site_id != null && (
+                              <form action={toggleSubdomainAction}>
+                                <input type="hidden" name="site_id" value={r.site_id} />
+                                <input type="hidden" name="off" value={subOff ? "0" : "1"} />
+                                <button className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs transition ${subOff ? "bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20" : "bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"}`} title={subOff ? "Rétablit l'adresse slug.mbila.ca" : "Coupe l'adresse slug.mbila.ca (redirige vers le domaine)"}>
+                                  {subOff ? ".mbila.ca coupée ✓" : "Couper .mbila.ca"}
+                                </button>
+                              </form>
+                            )}
+                            <form action={deactivateDomainAction}>
+                              <input type="hidden" name="id" value={r.id} />
+                              <button className="flex items-center gap-1 rounded-lg bg-white/5 px-3 py-1.5 text-xs text-white/50 transition hover:bg-white/10">
+                                Désactiver
+                              </button>
+                            </form>
+                          </>
                         )}
                         {dom.status === "en_attente" && (
                           <form action={refuseDomainAction}>
