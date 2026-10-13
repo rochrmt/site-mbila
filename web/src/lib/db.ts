@@ -112,6 +112,35 @@ export function getDb() {
   // Mise en avant sur la page d'accueil (choisie par l'admin)
   try { db.exec("ALTER TABLE sites ADD COLUMN featured_carousel INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà présente */ }
   try { db.exec("ALTER TABLE sites ADD COLUMN featured_example INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà présente */ }
+  // Inscription par téléphone : colonne phone (+ email devient optionnel).
+  // Doit tourner AVANT les ALTER users ci-dessous : la recréation de la table
+  // supprimerait sinon must_change / email_verified sur une base fraîche.
+  {
+    const cols = (db.prepare("PRAGMA table_info(users)").all() as { name: string }[]).map((c) => c.name);
+    if (!cols.includes("phone")) {
+      db.exec(`
+        CREATE TABLE users_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          email TEXT UNIQUE,
+          phone TEXT UNIQUE,
+          password TEXT NOT NULL,
+          profile TEXT NOT NULL DEFAULT 'particulier',
+          must_change INTEGER NOT NULL DEFAULT 0,
+          email_verified INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        INSERT INTO users_new (id, name, email, phone, password, profile, must_change, email_verified, created_at)
+          SELECT id, name, email, NULL, password,
+            ${cols.includes("profile") ? "profile" : "'particulier'"},
+            ${cols.includes("must_change") ? "must_change" : "0"},
+            ${cols.includes("email_verified") ? "email_verified" : "1"},
+            created_at FROM users;
+        DROP TABLE users;
+        ALTER TABLE users_new RENAME TO users;
+      `);
+    }
+  }
   // Réinitialisation par l'admin : impose un nouveau mot de passe à la prochaine connexion
   try { db.exec("ALTER TABLE users ADD COLUMN must_change INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà présente */ }
   // Vérification d'email à l'inscription — les comptes existants sont réputés vérifiés (défaut 1)
@@ -136,27 +165,6 @@ export function getDb() {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
-  // Inscription par téléphone : colonne phone (+ email devient optionnel)
-  {
-    const cols = (db.prepare("PRAGMA table_info(users)").all() as { name: string }[]).map((c) => c.name);
-    if (!cols.includes("phone")) {
-      db.exec(`
-        CREATE TABLE users_new (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          email TEXT UNIQUE,
-          phone TEXT UNIQUE,
-          password TEXT NOT NULL,
-          profile TEXT NOT NULL DEFAULT 'particulier',
-          created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-        INSERT INTO users_new (id, name, email, phone, password, profile, created_at)
-          SELECT id, name, email, NULL, password, ${cols.includes("profile") ? "profile" : "'particulier'"}, created_at FROM users;
-        DROP TABLE users;
-        ALTER TABLE users_new RENAME TO users;
-      `);
-    }
-  }
   // Tarifs personnalisables (admin) — remplacent la grille par défaut si présents
   db.exec(`CREATE TABLE IF NOT EXISTS pricing (
     id TEXT PRIMARY KEY,          -- 'essentiel' | 'essentiel:<categorie>' | 'premium'
