@@ -17,13 +17,18 @@ export function writeDomainRouter(domain: string, enable: boolean): string {
     return file;
   }
   mkdirSync(DYN_DIR, { recursive: true });
+  // www.<domaine> n'a de sens que sur un domaine racine (client.com).
+  // Pour un sous-domaine (site.mbila.pro), le SAN www ferait échouer le cert
+  // HTTP-01 s'il ne résout pas — on ne le demande donc pas.
+  const isApex = domain.split(".").length === 2;
+  const rule = isApex ? `Host(\`${domain}\`) || Host(\`www.${domain}\`)` : `Host(\`${domain}\`)`;
   writeFileSync(
     file,
     `# Domaine client : ${domain} — généré par Mbila, ne pas modifier à la main.
 http:
   routers:
     ${routerName(domain)}:
-      rule: "Host(\`${domain}\`) || Host(\`www.${domain}\`)"
+      rule: "${rule}"
       entrypoints: ["websecure"]
       service: mbila@docker
       tls:
