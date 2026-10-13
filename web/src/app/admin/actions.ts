@@ -160,8 +160,16 @@ export async function activateDomainAction(form: FormData) {
   const r = getHostingRequest(id);
   const row = r?.domain ? getCustomDomain(r.domain) : null;
   if (!r || !r.domain || !row) return;
-  writeDomainRouter(r.domain, true);
-  const dns = await provisionDns(r.domain);
+  // L'écriture du routeur (montage host) et l'appel DNS peuvent échouer —
+  // on ne casse jamais l'action, on consigne dans la note de la demande.
+  try {
+    writeDomainRouter(r.domain, true);
+  } catch (e) {
+    updateHostingRequest(id, { status: "en_cours", note: `${r.note ? r.note + "\n" : ""}⚠️ Routeur non écrit : ${(e as Error).message} — vérifier /opt/traefik/dynamic/domains` });
+    revalidatePath("/admin/hebergement");
+    return;
+  }
+  const dns = await provisionDns(r.domain).catch((e) => `DNS auto échoué : ${(e as Error).message} — pointe ${r.domain} vers le VPS à la main`);
   setCustomDomainStatus(row.id, "actif");
   updateHostingRequest(id, { status: "en_ligne", note: `${r.note ? r.note + "\n" : ""}${dns}` });
   notify(r.user_id, `Votre domaine ${r.domain} est en ligne !`, `https://${r.domain}`);
@@ -174,7 +182,7 @@ export async function deactivateDomainAction(form: FormData) {
   const r = getHostingRequest(id);
   const row = r?.domain ? getCustomDomain(r.domain) : null;
   if (!r || !r.domain || !row) return;
-  writeDomainRouter(r.domain, false);
+  try { writeDomainRouter(r.domain, false); } catch { /* fichier déjà absent ou volume non monté */ }
   setCustomDomainStatus(row.id, "desactive");
   updateHostingRequest(id, { status: "en_cours" });
   revalidatePath("/admin/hebergement");
