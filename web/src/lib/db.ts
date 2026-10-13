@@ -167,6 +167,11 @@ export function getDb() {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+  // Réglages globaux admin (clé/valeur) — ex. paiement manuel on/off
+  db.exec(`CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )`);
   // Tarifs personnalisables (admin) — remplacent la grille par défaut si présents
   db.exec(`CREATE TABLE IF NOT EXISTS pricing (
     id TEXT PRIMARY KEY,          -- 'essentiel' | 'essentiel:<categorie>' | 'premium'
@@ -699,6 +704,20 @@ export function activeDomainForSite(siteId: number): CustomDomain | null {
 // Coupe/rétablit l'adresse slug.mbila.ca d'un site (admin)
 export function setSubdomainOff(siteId: number, off: boolean) {
   getDb().prepare("UPDATE sites SET subdomain_off = ? WHERE id = ?").run(off ? 1 : 0, siteId);
+}
+
+// ── Réglages globaux (clé/valeur) ───────────────────────────────
+export function getSetting(key: string, fallback: string): string {
+  const r = getDb().prepare("SELECT value FROM settings WHERE key = ?").get(key) as { value: string } | undefined;
+  return r?.value ?? fallback;
+}
+export function setSetting(key: string, value: string) {
+  getDb().prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, value);
+}
+
+// Le transfert Orange Money manuel est-il visible pour les clients ? (défaut : oui)
+export function manualPaymentEnabled() {
+  return getSetting("manual_payment", "1") === "1";
 }
 
 // Site servi sous un domaine perso actif (accepte www.<domaine>)

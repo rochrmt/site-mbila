@@ -20,7 +20,7 @@ const input =
 // Paiement en 3 étapes (comme le wizard de création) : offre → transfert
 // Orange Money → « j'ai payé ». Validation manuelle côté admin.
 // Le paiement en ligne (Chariow) est proposé quand l'offre a un produit associé.
-export default function PayForm({ siteId, prices, onDone, online }: { siteId: number; prices: Prices; onDone?: () => void; online?: OnlineProducts }) {
+export default function PayForm({ siteId, prices, onDone, online, manual = true }: { siteId: number; prices: Prices; onDone?: () => void; online?: OnlineProducts; manual?: boolean }) {
   const [step, setStep] = useState(0);
   const [plan, setPlan] = useState<PlanId>("essentiel");
   const [months, setMonths] = useState(1);
@@ -72,15 +72,17 @@ export default function PayForm({ siteId, prices, onDone, online }: { siteId: nu
 
   return (
     <div>
-      {/* Indicateur d'étapes */}
-      <div className="mb-6 flex items-center gap-2">
-        {titles.map((t, i) => (
-          <div key={t} className="flex flex-1 flex-col gap-1.5">
-            <div className={`h-1 rounded-full transition-all duration-500 ${i <= step ? "brand-grad" : "bg-white/10"}`} />
-            <span className={`text-[10px] font-medium ${i === step ? "text-white" : "text-white/35"}`}>{i + 1}. {t}</span>
-          </div>
-        ))}
-      </div>
+      {/* Indicateur d'étapes — masqué quand le transfert manuel est désactivé */}
+      {manual && (
+        <div className="mb-6 flex items-center gap-2">
+          {titles.map((t, i) => (
+            <div key={t} className="flex flex-1 flex-col gap-1.5">
+              <div className={`h-1 rounded-full transition-all duration-500 ${i <= step ? "brand-grad" : "bg-white/10"}`} />
+              <span className={`text-[10px] font-medium ${i === step ? "text-white" : "text-white/35"}`}>{i + 1}. {t}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {step === 0 && (
         <div className="pop-in">
@@ -139,8 +141,14 @@ export default function PayForm({ siteId, prices, onDone, online }: { siteId: nu
               </button>
               <p className="mt-2 text-center text-[11px] text-white/45">Orange Money · MTN MoMo · Moov · Wave · carte · sécurisé par Chariow</p>
               {onlineErr?.error && <p className="mt-2 rounded-lg bg-red-500/10 px-3 py-2 text-center text-xs text-red-300">{onlineErr.error}</p>}
-              <p className="mt-2 text-center text-[11px] text-white/35">↓ ou ci-dessous : transfert Orange Money avec vérification manuelle</p>
+              {manual && <p className="mt-2 text-center text-[11px] text-white/35">↓ ou ci-dessous : transfert Orange Money avec vérification manuelle</p>}
             </form>
+          )}
+          {/* Manuel désactivé + pas de produit en ligne pour cette offre → message clair */}
+          {!manual && !(online?.[`${plan}:${months}:${pp.monthly}`] ?? online?.[`${plan}:${months}`] ?? online?.[plan]) && (
+            <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-center text-xs leading-relaxed text-white/50">
+              Le paiement en ligne n&apos;est pas disponible pour cette offre. Contactez-nous pour finaliser votre commande.
+            </p>
           )}
         </div>
       )}
@@ -185,7 +193,8 @@ export default function PayForm({ siteId, prices, onDone, online }: { siteId: nu
         </div>
       )}
 
-      {step < 2 && (
+      {/* « Continuer » mène au transfert manuel — désactivé si l'admin coupe le manuel */}
+      {step < 2 && manual && (
         <div className="mt-6 flex items-center justify-between">
           {step > 0 ? (
             <button onClick={() => setStep((s) => s - 1)} className="rounded-full px-5 py-2.5 text-sm text-white/50 transition hover:bg-white/5">← Retour</button>

@@ -8,7 +8,7 @@ import { retryOnlinePayment, switchToManualPayment } from "@/app/actions";
 import { requireUser } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { DISPLAY_DOMAIN, PROTOCOL, siteUrl } from "@/lib/config";
-import { getNotifications, getPaymentsBySite, getSiteById, siteIsPaid, sitePlanPrice } from "@/lib/db";
+import { getNotifications, getPaymentsBySite, getSiteById, manualPaymentEnabled, siteIsPaid, sitePlanPrice } from "@/lib/db";
 import { chariowProducts } from "@/lib/chariow";
 import { planLabel } from "@/lib/pricing";
 
@@ -25,6 +25,7 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
   const paid = siteIsPaid(site);
   const pending = getPaymentsBySite(site.id).find((p) => p.status === "en_attente");
   const online = site.published && paid && !site.suspended;
+  const manualOn = manualPaymentEnabled(); // réglage admin : transfert OM autorisé ou non
 
   return (
     <div className="min-h-screen bg-[#07070c] text-white">
@@ -84,13 +85,17 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
                         <RefreshCw size={15} /> Réessayer le paiement en ligne
                       </button>
                     </form>
-                    <form action={switchToManualPayment}>
-                      <input type="hidden" name="payment_id" value={pending.id} />
-                      <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-400/40 bg-orange-400/10 px-5 py-3 text-sm font-semibold text-orange-200 transition hover:bg-orange-400/20">
-                        <Wallet size={15} /> Payer par transfert Orange Money
-                      </button>
-                    </form>
-                    <p className="text-[11px] text-white/40">Le paiement en ligne ne marche pas ? Choisissez le transfert, notre équipe vérifie et valide.</p>
+                    {manualOn && (
+                      <>
+                        <form action={switchToManualPayment}>
+                          <input type="hidden" name="payment_id" value={pending.id} />
+                          <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-400/40 bg-orange-400/10 px-5 py-3 text-sm font-semibold text-orange-200 transition hover:bg-orange-400/20">
+                            <Wallet size={15} /> Payer par transfert Orange Money
+                          </button>
+                        </form>
+                        <p className="text-[11px] text-white/40">Le paiement en ligne ne marche pas ? Choisissez le transfert, notre équipe vérifie et valide.</p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -99,7 +104,7 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
                 <h2 className="font-display text-2xl font-bold">{online ? "Prolonger ou changer d'offre" : "Régulariser mon abonnement"}</h2>
                 <p className="mt-1 text-sm text-white/50">Le temps payé s&apos;ajoute à la fin de votre abonnement actuel, rien n&apos;est perdu.</p>
                 <div className="mt-5">
-                  <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category), premium: sitePlanPrice("premium") }} online={chariowProducts()} />
+                  <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category), premium: sitePlanPrice("premium") }} online={chariowProducts()} manual={manualOn} />
                 </div>
               </div>
             )}
@@ -126,13 +131,17 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
                     <RefreshCw size={15} /> Réessayer le paiement en ligne
                   </button>
                 </form>
-                <form action={switchToManualPayment}>
-                  <input type="hidden" name="payment_id" value={pending.id} />
-                  <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-400/40 bg-orange-400/10 px-5 py-3 text-sm font-semibold text-orange-200 transition hover:bg-orange-400/20">
-                    <Wallet size={15} /> Payer par transfert Orange Money
-                  </button>
-                </form>
-                <p className="text-[11px] text-white/40">Le paiement en ligne ne marche pas ? Choisissez le transfert, notre équipe vérifie et valide.</p>
+                {manualOn && (
+                  <>
+                    <form action={switchToManualPayment}>
+                      <input type="hidden" name="payment_id" value={pending.id} />
+                      <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-400/40 bg-orange-400/10 px-5 py-3 text-sm font-semibold text-orange-200 transition hover:bg-orange-400/20">
+                        <Wallet size={15} /> Payer par transfert Orange Money
+                      </button>
+                    </form>
+                    <p className="text-[11px] text-white/40">Le paiement en ligne ne marche pas ? Choisissez le transfert, notre équipe vérifie et valide.</p>
+                  </>
+                )}
               </div>
             )}
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -165,7 +174,7 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
               </Link>
             </div>
             <div className="mt-8 rounded-3xl border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-              <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category), premium: sitePlanPrice("premium") }} online={chariowProducts()} />
+              <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category), premium: sitePlanPrice("premium") }} online={chariowProducts()} manual={manualOn} />
             </div>
           </>
         )}

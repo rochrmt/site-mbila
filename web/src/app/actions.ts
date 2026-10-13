@@ -7,7 +7,7 @@ import { isAdmin } from "@/lib/admin";
 import { appUrl, RESERVED_SLUGS, ROOT_DOMAIN, siteUrl, SLUG_RE, slugify } from "@/lib/config";
 import {
   addCustomDomain, addHostingRequest, addPasswordReset, addPayment, commitDraft, createEmailToken, createSite, deleteSite, discardDraft,
-  getDb, getPayment, getSiteById, hasPendingReset, markNotificationsRead, notifyAdmins, saveDraft as saveDraftDb,
+  getDb, getPayment, getSiteById, hasPendingReset, manualPaymentEnabled, markNotificationsRead, notifyAdmins, saveDraft as saveDraftDb,
   setPaymentExternal, setPaymentStatus, siteIsPaid, slugTaken, undoSite as undoSiteDb, updateSite, updateUserEmail, updateUserPassword,
 } from "@/lib/db";
 import { chariowProductFor, fetchProductPrice, initiateCheckout } from "@/lib/chariow";
@@ -414,11 +414,13 @@ export async function retryOnlinePayment(form: FormData) {
 
 // Basculer vers le transfert manuel : le paiement en ligne en attente est
 // abandonné, le formulaire Orange Money redevient disponible.
+// Bloqué si l'admin a désactivé le paiement manuel (réglage global).
 export async function switchToManualPayment(form: FormData) {
   const user = await requireUser();
   const pay = getPayment(Number(form.get("payment_id") ?? 0));
   const site = pay ? getSiteById(pay.site_id) : null;
   if (!pay || !site || (site.user_id !== user.id && !isAdmin(user))) redirect("/dashboard");
+  if (!manualPaymentEnabled()) redirect(`/payer/${site.id}`);
   if (pay.status === "en_attente")
     setPaymentStatus(pay.id, "refuse", "Le client opte pour le transfert Orange Money");
   redirect(`/payer/${site.id}`);

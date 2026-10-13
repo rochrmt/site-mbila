@@ -1,7 +1,7 @@
 import { CATEGORIES } from "@/content/categories";
-import { getAllPricing } from "@/lib/db";
+import { getAllPricing, manualPaymentEnabled } from "@/lib/db";
 import { monthlyPrice } from "@/lib/pricing";
-import { savePricingAction } from "../actions";
+import { savePricingAction, toggleManualPaymentAction } from "../actions";
 
 const catLabel = (id: string) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
 
@@ -27,6 +27,7 @@ const field = "text-[11px] font-medium uppercase tracking-wider text-white/35";
 export default function AdminTarifs() {
   const rows = getAllPricing();
   const cur = (id: string) => rows.find((r) => r.id === id);
+  const manual = manualPaymentEnabled();
 
   return (
     <div>
@@ -34,6 +35,23 @@ export default function AdminTarifs() {
       <p className="mt-2 text-white/50">
         Prix mensuels par type de site — le client ne voit que le tarif de sa catégorie. Une promo remplace le prix et affiche son étiquette.
       </p>
+
+      {/* Interrupteur : transfert Orange Money manuel */}
+      <div className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-5 ${manual ? "border-orange-400/25 bg-orange-400/[0.05]" : "border-white/10 bg-white/[0.02]"}`}>
+        <div>
+          <p className="font-semibold">Transfert Orange Money manuel</p>
+          <p className="mt-0.5 text-xs text-white/45">
+            {manual
+              ? "Actif : le client peut « j'ai payé » par transfert, vous validez à la main."
+              : "Désactivé : seul le paiement en ligne (Chariow) est proposé aux clients."}
+          </p>
+        </div>
+        <form action={toggleManualPaymentAction}>
+          <button className={`rounded-full px-6 py-2.5 text-sm font-semibold transition ${manual ? "bg-orange-400/15 text-orange-200 hover:bg-orange-400/25" : "bg-white/10 text-white/60 hover:bg-white/15"}`}>
+            {manual ? "Activé — cliquer pour couper" : "Coupé — cliquer pour activer"}
+          </button>
+        </form>
+      </div>
 
       <form action={savePricingAction} className="mt-8 space-y-3">
         {ROWS.map((r) => {

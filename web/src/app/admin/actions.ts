@@ -12,7 +12,7 @@ import { DATA_DIR } from "@/lib/config";
 import {
   addStockImage, confirmPayment, deleteCustomTemplate, deleteHostingRequest, deleteSite, deleteStockImage, getCustomDomain,
   getDb, getHostingRequest, getPayment, getSiteById, getUserById, HOSTING_STATUS, notify, saveCustomTemplate,
-  adminResetPassword, getPasswordResets, setCustomDomainStatus, setEmailVerified, setPasswordResetStatus, setPaymentStatus, setPlanPrice, setSubdomainOff,
+  adminResetPassword, getPasswordResets, manualPaymentEnabled, setCustomDomainStatus, setEmailVerified, setPasswordResetStatus, setPaymentStatus, setPlanPrice, setSetting, setSubdomainOff,
   setSiteFeatured, updateHostingRequest, updateSite,
   type FeatureSlot, type HostingStatus,
 } from "@/lib/db";
@@ -174,6 +174,13 @@ export async function activateDomainAction(form: FormData) {
   updateHostingRequest(id, { status: "en_ligne", note: `${r.note ? r.note + "\n" : ""}${dns}` });
   notify(r.user_id, `Votre domaine ${r.domain} est en ligne !`, `https://${r.domain}`);
   revalidatePath("/admin/hebergement");
+}
+
+// Active/désactive le transfert Orange Money manuel (réglage global)
+export async function toggleManualPaymentAction() {
+  await requireAdmin();
+  setSetting("manual_payment", manualPaymentEnabled() ? "0" : "1");
+  revalidatePath("/admin/tarifs");
 }
 
 // Coupe ou rétablit l'adresse slug.mbila.ca d'un site (le domaine perso reste l'adresse principale)

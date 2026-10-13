@@ -1,6 +1,6 @@
 import { requireVerifiedUser } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
-import { addPayment, getPaymentsBySite, getSiteById, notifyAdmins, sitePlanPrice } from "@/lib/db";
+import { addPayment, getPaymentsBySite, getSiteById, manualPaymentEnabled, notifyAdmins, sitePlanPrice } from "@/lib/db";
 import { notifyAdmin } from "@/lib/mail";
 import { MONTHS_OK, planLabel, totalFor } from "@/lib/pricing";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
@@ -23,6 +23,7 @@ export async function POST(req: Request) {
 
   const site = getSiteById(siteId);
   if (!site || (site.user_id !== user.id && !isAdmin(user))) return Response.json({ error: "Site introuvable." }, { status: 404 });
+  if (!manualPaymentEnabled()) return Response.json({ error: "Le transfert Orange Money est temporairement désactivé. Payez en ligne." }, { status: 403 });
   if (payer && !PHONE_OK(payer)) return Response.json({ error: "Numéro Orange Money invalide (7 à 15 chiffres)." }, { status: 400 });
   // Prix selon la catégorie du site + surcharge admin — jamais côté client
   const monthly = sitePlanPrice(plan, site.category).monthly;
