@@ -186,7 +186,10 @@ export async function refuseDomainAction(form: FormData) {
   const r = getHostingRequest(id);
   const row = r?.domain ? getCustomDomain(r.domain) : null;
   if (row) setCustomDomainStatus(row.id, "refuse");
-  if (r) updateHostingRequest(id, { status: "refuse" });
+  if (r) {
+    updateHostingRequest(id, { status: "refuse" });
+    notify(r.user_id, `Votre demande de domaine ${r.domain} a été refusée. Contactez-nous ou proposez un autre domaine depuis l'éditeur.`, `/dashboard/sites/${r.site_id ?? ""}`);
+  }
   revalidatePath("/admin/hebergement");
 }
 

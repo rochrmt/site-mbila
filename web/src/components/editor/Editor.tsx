@@ -678,7 +678,7 @@ export default function Editor({
                 <div className="rounded-xl border border-white/10 p-4">
                   <p className="flex items-center gap-2 font-semibold"><Globe size={15} className="text-cyan-300" /> Domaine personnalisé</p>
                   <p className="mt-1 text-xs text-white/50">Utilisez votre propre domaine (ex. monentreprise.com) au lieu de l&apos;adresse .mbila.ca.</p>
-                  {domains.length > 0 ? (
+                  {domains.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {domains.map((dom) => (
                         <div key={dom.id} className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
@@ -696,7 +696,9 @@ export default function Editor({
                         <p className="text-[11px] leading-relaxed text-white/35">Votre site répond déjà sur ce domaine, l&apos;adresse .mbila.ca reste active aussi.</p>
                       )}
                     </div>
-                  ) : domSent ? (
+                  )}
+                  {/* Le formulaire reste disponible tant qu'aucun domaine n'est en cours ou actif */}
+                  {domains.some((x) => x.status === "en_attente" || x.status === "actif") ? null : domSent ? (
                     <p className="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2.5 text-xs text-emerald-300">
                       Demande envoyée ✓. On vous répond sur WhatsApp sous 24 h pour la suite (achat et configuration du domaine).
                     </p>
