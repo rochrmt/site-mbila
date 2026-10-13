@@ -1,0 +1,11 @@
+# Dossiers étrangers au projet Mbila (autres projets, perso)
+Downloads/
+Clev Africa/
+Mbila/
+shots/
+.vscode/
+
+# Artefacts dev
+*.log
+Copilot_*.jpg
+nul

@@ -1,0 +1,49 @@
+# ============================================================
+#  Mbila SaaS — se branche sur le Traefik existant du VPS
+#  Prérequis : Traefik tourne avec le réseau "traefik-proxy"
+#              et un resolver "letsencrypt" en DNS-01 (hostinger)
+#  Usage : docker compose up -d --build
+# ============================================================
+
+services:
+  app:
+    build: ./web
+    container_name: mbila
+    restart: unless-stopped
+    # Secrets/config du VPS : ADMIN_EMAILS, SMTP_*, MAIL_* — créer .env à côté du compose
+    env_file:
+      - .env
+    environment:
+      ROOT_DOMAIN: mbila.ca
+      # Domaines clients : répertoire des routeurs Traefik (file provider + watch)
+      TRAEFIK_DOMAINS_DIR: /dynamic-domains
+      # Optionnel — DNS automatique quand le domaine est sur ton compte Hostinger :
+      # HOSTINGER_API_TOKEN: le-meme-token-que-dns01
+      # VPS_PUBLIC_IP: ip.du.vps
+    volumes:
+      - mbila-data:/data
+      # Les routeurs domaines clients écrits par l'app atterrissent dans Traefik
+      - /opt/traefik/dynamic/domains:/dynamic-domains
+    networks:
+      - traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      # mbila.ca + TOUS les sous-domaines (sites des utilisateurs) → ce conteneur
+      # Traefik v3 (si ton Traefik est en v2 : HostRegexp(`{subdomain:[a-z0-9-]+}.mbila.ca`))
+      - "traefik.http.routers.mbila.rule=Host(`mbila.ca`) || HostRegexp(`^[a-z0-9-]+\\.mbila\\.ca$`)"
+      - "traefik.http.routers.mbila.entrypoints=websecure"
+      # Resolver DNS-01 dédié (wildcard impossible en HTTP-01) — les domaines
+      # clients (client.com) gardent le resolver "letsencrypt" HTTP-01.
+      - "traefik.http.routers.mbila.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.mbila.middlewares=gzip@file,security-headers@file"
+      # Déclenche l'émission du certificat wildcard *.mbila.ca
+      - "traefik.http.routers.mbila.tls.domains[0].main=mbila.ca"
+      - "traefik.http.routers.mbila.tls.domains[0].sans=*.mbila.ca"
+      - "traefik.http.services.mbila.loadbalancer.server.port=3000"
+
+volumes:
+  mbila-data:
+
+networks:
+  traefik-proxy:
+    external: true
