@@ -201,6 +201,8 @@ export async function deactivateDomainAction(form: FormData) {
   if (!r || !r.domain || !row) return;
   try { writeDomainRouter(r.domain, false); } catch { /* fichier déjà absent ou volume non monté */ }
   setCustomDomainStatus(row.id, "desactive");
+  // L'adresse slug.mbila.ca redevient l'adresse du site (le drapeau « coupée » est retiré)
+  if (r.site_id) setSubdomainOff(r.site_id, false);
   updateHostingRequest(id, { status: "en_cours" });
   revalidatePath("/admin/hebergement");
 }
