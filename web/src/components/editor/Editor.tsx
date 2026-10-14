@@ -665,6 +665,11 @@ export default function Editor({
                     <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="grid h-10 w-10 place-items-center rounded-lg bg-white/5 hover:bg-white/10" aria-label="Copier">{copied ? <Check size={16} /> : <Copy size={16} />}</button>
                   </div>
                   <a href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ${d.name} : ${url}`)}`} target="_blank" className="mt-3 block rounded-lg bg-[#25D366] py-2.5 text-center text-sm font-semibold text-black">Partager sur WhatsApp</a>
+                  {!domains.some((x) => x.status === "actif") && (
+                    <p className="mt-3 rounded-lg border border-cyan-400/20 bg-cyan-400/[0.06] px-3 py-2 text-[11px] leading-relaxed text-cyan-100/80">
+                      💡 Plus pro avec <b>votre-domaine.com</b> — demandez-le juste en dessous, on s&apos;occupe de tout.
+                    </p>
+                  )}
                   <p className="mt-3 text-xs leading-relaxed">
                     {isPaid
                       ? <span className="text-emerald-300/80">Abonnement actif jusqu&apos;au {new Date(site.paidUntil!).toLocaleDateString("fr-FR")} · <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">Renouveler / changer d&apos;offre →</Link></span>

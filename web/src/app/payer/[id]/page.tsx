@@ -54,6 +54,16 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
                   Abonnement actif jusqu&apos;au {new Date(site.paid_until!).toLocaleDateString("fr-FR")} ·{" "}
                   <Link href={`/dashboard/sites/${site.id}`} className="text-white/70 underline-offset-2 hover:underline">Continuer à personnaliser</Link>
                 </p>
+                <div className="mx-auto mt-6 max-w-md rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] px-5 py-4 text-left">
+                  <p className="text-sm font-semibold text-cyan-200">Votre propre nom de domaine ?</p>
+                  <p className="mt-1 text-xs leading-relaxed text-white/50">
+                    monentreprise.com au lieu de {shownUrl.split("://")[1]}. On s&apos;occupe de tout — demandez-le depuis
+                    l&apos;éditeur (onglet Réglages) ou sur WhatsApp, réponse sous 24 h.
+                  </p>
+                  <Link href={`/dashboard/sites/${site.id}?tab=settings`} className="mt-2.5 inline-block rounded-full bg-cyan-400/15 px-4 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/25">
+                    Demander mon domaine →
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="rounded-3xl border border-amber-400/25 bg-amber-400/[0.06] p-8 text-center">
@@ -104,7 +114,7 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
                 <h2 className="font-display text-2xl font-bold">{online ? "Prolonger ou changer d'offre" : "Régulariser mon abonnement"}</h2>
                 <p className="mt-1 text-sm text-white/50">Le temps payé s&apos;ajoute à la fin de votre abonnement actuel, rien n&apos;est perdu.</p>
                 <div className="mt-5">
-                  <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category), premium: sitePlanPrice("premium") }} online={chariowProducts()} manual={manualOn} />
+                  <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowProducts()} manual={manualOn} />
                 </div>
               </div>
             )}
@@ -174,7 +184,7 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
               </Link>
             </div>
             <div className="mt-8 rounded-3xl border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-              <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category), premium: sitePlanPrice("premium") }} online={chariowProducts()} manual={manualOn} />
+              <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowProducts()} manual={manualOn} />
             </div>
           </>
         )}

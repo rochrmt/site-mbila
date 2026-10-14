@@ -855,7 +855,7 @@ export function setPlanPrice(id: string, monthly: number, promo: number | null, 
 // Prix effectif d'un plan pour une catégorie de site : override admin si présent
 // (essentiel:<cat> puis essentiel en repli), sinon la grille par défaut.
 export function sitePlanPrice(plan: string, category?: string | null): PlanPrice {
-  const ids = plan === "premium" ? ["premium"] : category ? [`essentiel:${category}`, "essentiel"] : ["essentiel"];
+  const ids = category ? [`essentiel:${category}`, "essentiel"] : ["essentiel"];
   for (const id of ids) {
     const r = getDb().prepare("SELECT monthly, promo, promo_label FROM pricing WHERE id = ?").get(id) as PricingRow | undefined;
     if (r) {

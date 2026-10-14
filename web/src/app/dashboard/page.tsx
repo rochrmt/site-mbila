@@ -68,6 +68,9 @@ export default async function Dashboard() {
                         <p className="truncate text-sm text-white/45">
                           {dom ? <span className={dom.status === "actif" ? "text-cyan-300" : "text-amber-300/70"}>{dom.domain}{dom.status === "actif" ? "" : " · en attente"}</span> : `${s.slug}.${DISPLAY_DOMAIN}`}
                         </p>
+                        {!dom && s.published && (
+                          <p className="mt-0.5 text-[11px] text-cyan-300/70">Aussi disponible : votre-domaine.com →</p>
+                        )}
                       </div>
                       <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${s.suspended ? "bg-amber-400/10 text-amber-300" : s.published && expired ? "bg-red-400/10 text-red-300" : s.published ? "bg-emerald-400/10 text-emerald-300" : "bg-white/10 text-white/50"}`}>
                         {s.suspended ? "Suspendu" : s.published && expired ? "Expiré" : s.published ? "En ligne" : s.paid_until && s.paid_until > new Date().toISOString() ? "Prêt à publier" : "Brouillon"}

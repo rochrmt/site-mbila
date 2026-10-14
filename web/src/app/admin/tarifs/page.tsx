@@ -17,7 +17,6 @@ const ROWS: { id: string; label: string; hint: string; def: number }[] = [
   { id: "essentiel:construction", label: `Essentiel · ${catLabel("construction")}`, hint: "BTP, artisans", def: monthlyPrice("essentiel", "construction") },
   { id: "essentiel:realestate", label: `Essentiel · ${catLabel("realestate")}`, hint: "Agences immo, promoteurs", def: monthlyPrice("essentiel", "realestate") },
   { id: "essentiel:transport", label: `Essentiel · ${catLabel("transport")}`, hint: "Logistique, flottes", def: monthlyPrice("essentiel", "transport") },
-  { id: "premium", label: "Premium", hint: "Domaine personnalisé inclus", def: monthlyPrice("premium") },
 ];
 
 const input =

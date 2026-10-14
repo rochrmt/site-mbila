@@ -8,7 +8,7 @@ import { PHONE_OK } from "@/lib/validation";
 
 // Prix résolus côté serveur (peuvent venir de la grille admin, avec promo)
 export type PlanPrice = { monthly: number; original?: number; label?: string };
-export type Prices = { essentiel: PlanPrice; premium: PlanPrice };
+export type Prices = { essentiel: PlanPrice; premium?: PlanPrice };
 // Produits Chariow disponibles : clé "<plan>:<mois>" → prix réellement payé en ligne
 export type OnlineProducts = Record<string, { price: number }>;
 

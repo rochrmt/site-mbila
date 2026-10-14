@@ -1,7 +1,8 @@
 // Tarifs Mbila — partagé client/serveur.
+// Une seule offre : Essentiel. Le domaine personnalisé se gère hors
+// abonnement (demande dans l'éditeur → réglé directement avec l'équipe).
 export const PLANS = [
-  { id: "essentiel", name: "Essentiel", monthly: 6500, desc: "Votre site en ligne sur son adresse .mbila.ca", feats: ["Hébergement + HTTPS inclus", "Votre éditeur, messages, images"] },
-  { id: "premium", name: "Premium", monthly: 11500, desc: "Essentiel + votre propre nom de domaine", feats: ["Tout Essentiel", "votre-domaine.com géré pour vous"] },
+  { id: "essentiel", name: "Essentiel", monthly: 6500, desc: "Votre site en ligne sur son adresse .mbila.ca", feats: ["Hébergement + HTTPS inclus", "Votre éditeur, messages, images", "Domaine perso possible (sur demande)"] },
 ] as const;
 
 export type PlanId = (typeof PLANS)[number]["id"];
