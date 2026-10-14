@@ -30,13 +30,15 @@ export default async function Dashboard() {
         </div>
 
         {sites.length > 0 && (
-          <div className="mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] px-6 py-4">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-cyan-400/15 text-cyan-300"><Globe size={20} /></span>
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">Votre propre nom de domaine</p>
-              <p className="text-sm text-white/50">monentreprise.com au lieu de {DISPLAY_DOMAIN}. On s&apos;occupe de tout, réponse sur WhatsApp.</p>
+          <div className="mt-8 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] px-5 py-4 sm:px-6">
+            <div className="flex items-center gap-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-cyan-400/15 text-cyan-300"><Globe size={20} /></span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold">Votre propre nom de domaine</p>
+                <p className="mt-0.5 text-sm leading-snug text-white/50">monentreprise.com au lieu de {DISPLAY_DOMAIN}. On s&apos;occupe de tout, réponse sur WhatsApp.</p>
+              </div>
             </div>
-            <Link href={`/dashboard/sites/${sites[0].id}?tab=settings`} className="rounded-full bg-cyan-400/15 px-5 py-2.5 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/25">
+            <Link href={`/dashboard/sites/${sites[0].id}?tab=settings`} className="mt-3 block rounded-full bg-cyan-400/15 px-5 py-2.5 text-center text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/25 sm:mt-4">
               Je veux mon domaine →
             </Link>
           </div>
