@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import Editor from "@/components/editor/Editor";
+import UpsellModal from "@/components/UpsellModal";
 import { requireUser } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { DISPLAY_DOMAIN, siteUrl } from "@/lib/config";
-import { getDomainsBySite, getLeads, getNotifications, getPaymentsBySite, getSiteById, getStockImages, historyCount, sitePlanPrice } from "@/lib/db";
+import { getDomainsBySite, getLeads, getNotifications, getPaymentsBySite, getSiteById, getStockImages, getUpsellMessage, historyCount, sitePlanPrice } from "@/lib/db";
 import stock from "@/lib/stock-manifest.json";
 import { allTemplates } from "@/templates/all";
 import { TEMPLATES } from "@/templates/library";
@@ -32,8 +33,11 @@ export default async function EditSite({ params, searchParams }: PageProps<"/das
   })).filter((t) => t.fits || t.id === site.template_id);
   const stockMerged = Object.fromEntries(Object.entries(stock).map(([k, v]) => [k, v.map((x) => x.src)]));
   for (const i of getStockImages()) (stockMerged[i.category] ??= []).unshift(i.src);
+  const upsell = getUpsellMessage();
   return (
-    <Editor
+    <>
+      {upsell.on && <UpsellModal siteId={site.id} title={upsell.title} text={upsell.text} />}
+      <Editor
       site={{ id: site.id, slug: site.slug, templateId: site.template_id, paletteId: site.palette_id ?? "", anim: site.anim ?? "subtle", published: site.published, paidUntil: site.paid_until, data: site.data, draft: site.draft }}
       history={historyCount(site.id)}
       url={siteUrl(site.slug)}
@@ -50,6 +54,8 @@ export default async function EditSite({ params, searchParams }: PageProps<"/das
       notifications={getNotifications(user.id).list}
       unreadNotifs={getNotifications(user.id).unread}
       price={sitePlanPrice("essentiel", site.category)}
+      upsell={upsell.on ? { title: upsell.title, text: upsell.text } : null}
     />
+    </>
   );
 }

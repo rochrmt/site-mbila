@@ -720,6 +720,21 @@ export function manualPaymentEnabled() {
   return getSetting("manual_payment", "1") === "1";
 }
 
+// Message « allez plus loin » (popup + carte éditeur) — éditable par l'admin.
+export type UpsellMsg = { on: boolean; title: string; text: string };
+export function getUpsellMessage(): UpsellMsg {
+  try {
+    const v = JSON.parse(getSetting("upsell_msg", "")) as Partial<UpsellMsg>;
+    if (v && typeof v.title === "string" && typeof v.text === "string")
+      return { on: v.on !== false, title: v.title.slice(0, 120), text: v.text.slice(0, 600) };
+  } catch { /* valeur par défaut */ }
+  return {
+    on: true,
+    title: "Allez plus loin avec votre site",
+    text: "Un site peut aller bien au-delà d'une vitrine : base de données, réservations en ligne, espace membre, application sur mesure… Dites-nous votre idée, l'équipe Mbila vous accompagne.",
+  };
+}
+
 // Site servi sous un domaine perso actif (accepte www.<domaine>)
 export function siteForDomain(host: string): { site: NonNullable<ReturnType<typeof getSiteById>>; canonical: string } | null {
   const apex = host.startsWith("www.") ? host.slice(4) : host;

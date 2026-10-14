@@ -1,7 +1,7 @@
 import { CATEGORIES } from "@/content/categories";
-import { getAllPricing, manualPaymentEnabled } from "@/lib/db";
+import { getAllPricing, getUpsellMessage, manualPaymentEnabled } from "@/lib/db";
 import { monthlyPrice } from "@/lib/pricing";
-import { savePricingAction, toggleManualPaymentAction } from "../actions";
+import { savePricingAction, saveUpsellMessage, toggleManualPaymentAction } from "../actions";
 
 const catLabel = (id: string) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
 
@@ -51,6 +51,37 @@ export default function AdminTarifs() {
           </button>
         </form>
       </div>
+
+      {/* Message « allez plus loin » : popup après création + carte dans l'éditeur */}
+      {(() => {
+        const up = getUpsellMessage();
+        return (
+          <form action={saveUpsellMessage} className="mt-6 rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.05] p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold">Message « allez plus loin »</p>
+                <p className="mt-0.5 text-xs text-white/45">
+                  Propose aux clients des options avancées (base de données, application sur mesure…). Affiché en popup après la création du site et en carte dans l&apos;éditeur.
+                </p>
+              </div>
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                <input type="checkbox" name="upsell_on" defaultChecked={up.on} className="h-4 w-4 accent-cyan-400" /> Visible
+              </label>
+            </div>
+            <div className="mt-4 grid gap-4">
+              <div>
+                <label className={field}>Titre</label>
+                <input name="upsell_title" maxLength={120} defaultValue={up.title} required className={`${input} mt-1.5`} />
+              </div>
+              <div>
+                <label className={field}>Texte</label>
+                <textarea name="upsell_text" maxLength={600} required rows={3} defaultValue={up.text} className={`${input} mt-1.5`} />
+              </div>
+            </div>
+            <button className="mt-4 rounded-xl bg-cyan-400/15 px-6 py-2.5 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/25">Enregistrer le message</button>
+          </form>
+        );
+      })()}
 
       <form action={savePricingAction} className="mt-8 space-y-3">
         {ROWS.map((r) => {

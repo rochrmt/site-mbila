@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   ArrowLeft, Check, Copy, ExternalLink, Eye, Globe, Image as ImageIcon, Inbox, Loader2, Monitor, Palette, PartyPopper, Plus,
-  Eraser, RefreshCcw, Save, Settings, ShieldCheck, Smartphone, Trash2, Type, Undo2, Upload, X,
+  Eraser, RefreshCcw, Save, Settings, ShieldCheck, Smartphone, Sparkles, Trash2, Type, Undo2, Upload, X,
 } from "lucide-react";
 import { commitSite, discardSiteDraft, removeSite, requestDomain, saveDraft, setPublished, undoSite } from "@/app/actions";
 import type { PlanPrice } from "./PayForm";
@@ -79,9 +79,9 @@ function Thumb({ src, onClick, onRemove }: { src?: string; onClick: () => void; 
 }
 
 export default function Editor({
-  site, url, host, leads, templates, palettes, stock, welcome, history, support, initialTab, domains, pendingPayment, notifications, unreadNotifs, price,
+  site, url, host, leads, templates, palettes, stock, welcome, history, support, initialTab, domains, pendingPayment, notifications, unreadNotifs, price, upsell,
 }: {
-  site: SiteInfo; url: string; host: string; leads: Lead[]; templates: TplInfo[]; palettes: PalInfo[]; stock: Record<string, string[]>; welcome: boolean; history: number; support?: boolean; initialTab?: string; domains: CustomDomain[]; pendingPayment: boolean; notifications: Notification[]; unreadNotifs: number; price: PlanPrice;
+  site: SiteInfo; url: string; host: string; leads: Lead[]; templates: TplInfo[]; palettes: PalInfo[]; stock: Record<string, string[]>; welcome: boolean; history: number; support?: boolean; initialTab?: string; domains: CustomDomain[]; pendingPayment: boolean; notifications: Notification[]; unreadNotifs: number; price: PlanPrice; upsell?: { title: string; text: string } | null;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>(
     TABS.some((t) => t.id === initialTab) ? (initialTab as (typeof TABS)[number]["id"]) : "content",
@@ -739,6 +739,19 @@ export default function Editor({
                     </div>
                   )}
                 </div>
+                {upsell && (
+                  <div className="rounded-xl border border-fuchsia-400/20 bg-fuchsia-500/[0.04] p-4">
+                    <p className="flex items-center gap-2 font-semibold"><Sparkles size={15} className="text-fuchsia-300" /> {upsell.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/50">{upsell.text}</p>
+                    <a
+                      href={`https://wa.me/23672679175?text=${encodeURIComponent(`Bonjour Mbila, je souhaite rendre mon site « ${d.name} » plus dynamique (base de données, application sur mesure…) — pouvez-vous m'accompagner ?`)}`}
+                      target="_blank" rel="noopener"
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-fuchsia-500/15 px-4 py-2 text-xs font-semibold text-fuchsia-200 transition hover:bg-fuchsia-500/25"
+                    >
+                      En parler à l&apos;équipe →
+                    </a>
+                  </div>
+                )}
                 <div className="rounded-xl border border-red-500/20 p-4">
                   <p className="font-semibold text-red-300">Zone dangereuse</p>
                   <p className="mt-1 text-sm text-white/50">Supprimer définitivement ce site et ses messages.</p>

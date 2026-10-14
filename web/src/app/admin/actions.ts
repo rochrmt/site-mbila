@@ -259,6 +259,16 @@ export async function savePricingAction(form: FormData) {
   revalidatePath("/admin/tarifs");
 }
 
+// Message « allez plus loin » affiché aux clients (popup + carte éditeur)
+export async function saveUpsellMessage(form: FormData) {
+  await requireAdmin();
+  const title = String(form.get("upsell_title") ?? "").trim().slice(0, 120);
+  const text = String(form.get("upsell_text") ?? "").trim().slice(0, 600);
+  const on = form.get("upsell_on") === "on";
+  if (title && text) setSetting("upsell_msg", JSON.stringify({ on, title, text }));
+  revalidatePath("/admin/tarifs");
+}
+
 // ── Sites clients : suspension (impayé, abus) & suppression ──────
 // Suspendre = le site n'est plus servi mais reste en base (réversible).
 export async function setSiteSuspendedAction(siteId: number, suspend: boolean) {
