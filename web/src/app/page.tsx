@@ -94,7 +94,7 @@ export default async function Home() {
         <div className="aurora absolute left-1/2 top-0 -z-0 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-600/40 via-fuchsia-500/30 to-amber-400/20 blur-[120px]" />
         <div className="relative mx-auto max-w-4xl text-center">
           <div className="pop-in inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-white/70">
-            <Sparkles size={14} className="text-fuchsia-400" /> Créez votre site ou mettez votre projet en ligne
+            Créez votre site ou mettez votre projet en ligne
           </div>
           <h1 className="pop-in mt-8 font-display text-5xl font-bold leading-[1.02] tracking-tight md:text-7xl" style={{ animationDelay: "100ms" }}>
             De votre idée<br />
