@@ -26,7 +26,7 @@ export default function AuthForm({ mode, next }: { mode: "signup" | "login"; nex
             {isUp ? (
               <input name="identifier" type="email" required placeholder="Votre adresse email (ex : nom@exemple.com)" autoComplete="email" className={input} />
             ) : (
-              <input name="identifier" required placeholder="Email ou téléphone" autoComplete="username" className={input} />
+              <input name="identifier" required placeholder="Votre adresse email" autoComplete="username" className={input} />
             )}
             <PasswordInput
               name="password"
