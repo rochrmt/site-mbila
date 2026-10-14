@@ -9,8 +9,8 @@ import { PHONE_OK } from "@/lib/validation";
 // Prix résolus côté serveur (peuvent venir de la grille admin, avec promo)
 export type PlanPrice = { monthly: number; original?: number; label?: string };
 export type Prices = { essentiel: PlanPrice; premium?: PlanPrice };
-// Produits Chariow disponibles : clé "<plan>:<mois>" → prix réellement payé en ligne
-export type OnlineProducts = Record<string, { price: number }>;
+// Produits Chariow déjà résolus côté serveur : clé = durée en mois → prix affiché
+export type OnlineProducts = Record<number | string, { price: number }>;
 
 const OM_NUMBER = "72 67 91 75";
 
@@ -125,7 +125,7 @@ export default function PayForm({ siteId, prices, onDone, online, manual = true 
           {dur.badge && <p className="mt-2 text-center text-xs text-emerald-300/80">Au lieu de {fullPrice} FCFA, vous économisez {(pp.monthly * months - total).toLocaleString("fr-FR")} F</p>}
           {promoLabel && <p className="mt-3 text-center text-xs font-semibold text-emerald-300/90">🏷️ {promoLabel}{pp.original ? " appliquée sur votre tarif" : ""}</p>}
 
-          {(online?.[`${plan}:${months}:${pp.monthly}`] ?? online?.[`${plan}:${months}`] ?? online?.[plan]) && (
+          {online?.[months] && (
             <form action={onlineAction} className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] p-4">
               <input type="hidden" name="site_id" value={siteId} />
               <input type="hidden" name="plan" value={plan} />
@@ -137,7 +137,7 @@ export default function PayForm({ siteId, prices, onDone, online, manual = true 
                 {onlineBusy ? <Loader2 size={17} className="animate-spin" /> : <Zap size={17} />}
                 {onlineBusy
                   ? "Redirection vers le paiement…"
-                  : `Payer ${(online[`${plan}:${months}:${pp.monthly}`] ?? online[`${plan}:${months}`] ?? online[plan]).price.toLocaleString("fr-FR")} F en ligne, activation immédiate`}
+                  : `Payer ${online[months].price.toLocaleString("fr-FR")} F en ligne, activation immédiate`}
               </button>
               <p className="mt-2 text-center text-[11px] text-white/45">Orange Money · MTN MoMo · Moov · Wave · carte · sécurisé par Chariow</p>
               {onlineErr?.error && <p className="mt-2 rounded-lg bg-red-500/10 px-3 py-2 text-center text-xs text-red-300">{onlineErr.error}</p>}
@@ -145,7 +145,7 @@ export default function PayForm({ siteId, prices, onDone, online, manual = true 
             </form>
           )}
           {/* Manuel désactivé + pas de produit en ligne pour cette offre → message clair */}
-          {!manual && !(online?.[`${plan}:${months}:${pp.monthly}`] ?? online?.[`${plan}:${months}`] ?? online?.[plan]) && (
+          {!manual && !online?.[months] && (
             <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-center text-xs leading-relaxed text-white/50">
               Le paiement en ligne n&apos;est pas disponible pour cette offre. Contactez-nous pour finaliser votre commande.
             </p>

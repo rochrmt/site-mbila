@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { DISPLAY_DOMAIN, PROTOCOL, siteUrl } from "@/lib/config";
 import { getNotifications, getPaymentsBySite, getSiteById, manualPaymentEnabled, siteIsPaid, sitePlanPrice } from "@/lib/db";
-import { chariowProducts } from "@/lib/chariow";
+import { chariowPricesForSite } from "@/lib/chariow";
 import { planLabel } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
@@ -114,7 +114,7 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
                 <h2 className="font-display text-2xl font-bold">{online ? "Prolonger ou changer d'offre" : "Régulariser mon abonnement"}</h2>
                 <p className="mt-1 text-sm text-white/50">Le temps payé s&apos;ajoute à la fin de votre abonnement actuel, rien n&apos;est perdu.</p>
                 <div className="mt-5">
-                  <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowProducts()} manual={manualOn} />
+                  <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowPricesForSite(site.category, sitePlanPrice("essentiel", site.category).monthly)} manual={manualOn} />
                 </div>
               </div>
             )}
@@ -184,7 +184,7 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
               </Link>
             </div>
             <div className="mt-8 rounded-3xl border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-              <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowProducts()} manual={manualOn} />
+              <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowPricesForSite(site.category, sitePlanPrice("essentiel", site.category).monthly)} manual={manualOn} />
             </div>
           </>
         )}

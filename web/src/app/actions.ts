@@ -344,7 +344,7 @@ export async function markNotificationsReadAction() {
 // Crée le paiement « en ligne » en attente + la session Chariow, puis renvoie vers leur page.
 async function startChariowCheckout(site: NonNullable<ReturnType<typeof getSiteById>>, user: { id: number; name: string; email: string | null; phone: string | null }, plan: string, months: number): Promise<FormState> {
   // Prix mensuel de ce site (Essentiel varie selon la catégorie) → bon produit Chariow
-  const product = chariowProductFor(plan, months, monthlyPrice(plan, site.category));
+  const product = chariowProductFor(plan, months, monthlyPrice(plan, site.category), site.category);
   if (!product) return { error: "Paiement en ligne indisponible pour cette offre : payez par Orange Money ci-dessous." };
 
   // Téléphone du client : préfixe international (+XX) → pays détecté automatiquement.

@@ -1,32 +1,53 @@
 import crypto from "node:crypto";
+import { PRICED_CATEGORIES } from "./pricing";
 
 export type ChariowProduct = { id: string; price: number };
 
-// Mapping offre → produit Chariow. Clé = "<plan>:<mois>" ou "<plan>:<mois>:<prixMensuel>".
-// Le prix mensuel différencie les catégories Essentiel (3000/5500/7500/8500) — sinon le
-// client paierait un produit au prix d'une autre catégorie que la sienne.
-// Configuré via CHARIOW_PRODUCTS (JSON) dans .env, ex. :
-//   {"essentiel:1:5500":{"id":"prd_7p3kh2gj","price":5500},"premium:1":{"id":"prd_…","price":11500}}
-// Le prix enregistré chez nous = celui du produit Chariow (c'est ce que le client paie vraiment).
+// Mapping produit Chariow. Clé préférée = "<tier>:<mois>" où tier est la
+// catégorie tarifaire : portfolio | hotel | pro | standard | premium.
+// Ex. : {"hotel:6":{"id":"prd_…","price":51300}}
+// Rétro-compatible : "plan:mois" et "plan:mois:prixMensuel" restent lus.
+// Le prix enregistré chez nous = celui du produit Chariow (prix réel payé).
 export function chariowProducts(): Record<string, ChariowProduct> {
   try {
     const parsed = JSON.parse(process.env.CHARIOW_PRODUCTS ?? "{}") as Record<string, ChariowProduct>;
     return Object.fromEntries(
-      Object.entries(parsed).filter(([k, v]) => /^(essentiel|premium):[0-9]+(:[0-9]+)?$/.test(k) && v?.id && v.price > 0),
+      Object.entries(parsed).filter(([k, v]) => /^[a-z0-9_-]+:[0-9]+(:[0-9]+)?$/i.test(k) && v?.id && v.price > 0),
     );
   } catch {
     return {};
   }
 }
 
-// Recherche la clé la plus précise : "essentiel:1:7500" → "essentiel:1" → "essentiel".
-export function chariowProductFor(plan: string, months: number, monthly?: number) {
+// Catégorie de site → tier tarifaire (aligné sur PRICE_BY_CATEGORY).
+// portfolio et hotel ont leurs propres produits ; les catégories à prix
+// renforcé (legal, medical, tech…) partagent le tier « pro ».
+export function tierForCategory(category?: string | null): string {
+  if (category === "hotel" || category === "portfolio") return category;
+  if (category && PRICED_CATEGORIES.includes(category)) return "pro";
+  return "standard";
+}
+
+// Résolution : "hotel:6" → "essentiel:6:9500" (legacy) → "essentiel:6" → "essentiel".
+export function chariowProductFor(plan: string, months: number, monthly?: number, category?: string | null) {
   const all = chariowProducts();
+  const tiered = all[`${tierForCategory(category)}:${months}`];
+  if (tiered) return tiered;
   if (monthly) {
     const exact = all[`${plan}:${months}:${monthly}`];
     if (exact) return exact;
   }
   return all[`${plan}:${months}`] ?? all[plan] ?? null;
+}
+
+// Prix en ligne par durée pour un site — pour l'affichage du bouton « Payer en ligne ».
+export function chariowPricesForSite(category: string | null | undefined, monthly: number): Record<number, ChariowProduct> {
+  const out: Record<number, ChariowProduct> = {};
+  for (const m of [1, 6, 12]) {
+    const p = chariowProductFor("essentiel", m, monthly, category);
+    if (p) out[m] = p;
+  }
+  return out;
 }
 
 export function chariowEnabled() {
