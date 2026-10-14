@@ -37,6 +37,13 @@ export const PALETTES: Palette[] = [
   p("plum", "Prune", true, "#150d1a", "#f4ecf7", "#ad9bb6", "#201427", "#e07bd0", "#150d1a", "#f7b267", "#33213c", true),
   p("crimson", "Carmin", true, "#0f0a0a", "#f6eeee", "#b19b9b", "#1a1111", "#e23b3b", "#ffffff", "#f5c26b", "#2e1f1f"),
   p("ember", "Braise", true, "#100b08", "#f8ede4", "#b59d8c", "#1a1210", "#ff4d21", "#ffffff", "#ffb347", "#332016", true),
+  // Signatures
+  p("pearl", "Perle & laiton", false, "#f8f5f0", "#1b1a18", "#6f6a62", "#efe9e0", "#1b1a18", "#ffffff", "#a08a5c", "#e3ddd3"),
+  p("studio", "Studio", false, "#ffffff", "#1d1d1f", "#6e6e73", "#f5f5f7", "#0071e3", "#ffffff", "#2997ff", "#d2d2d7"),
+  p("graphite", "Graphite", true, "#000000", "#f5f5f7", "#86868b", "#161617", "#0071e3", "#ffffff", "#2997ff", "#2c2c2e"),
+  p("oat", "Avoine", false, "#ffffff", "#212121", "#6b6b6b", "#f4f1ea", "#212121", "#ffffff", "#5b6f4e", "#e5e1d8"),
+  p("petal", "Pétale", false, "#ffffff", "#111111", "#6c6463", "#f6e3df", "#111111", "#ffffff", "#e3a69c", "#efdcd8"),
+  p("oxford", "Bleu académique", false, "#ffffff", "#1a1d23", "#5b6372", "#f1f3f6", "#002147", "#ffffff", "#c6a15b", "#dde2ea"),
 ];
 
 // Couleur de texte lisible pour les palettes dont le primaire est trop clair sur fond clair
@@ -56,6 +63,9 @@ export const FONT_PAIRS: FontPair[] = [
   { id: "soft-serif", head: "var(--f-dmserif)", body: "var(--f-manrope)" },
   { id: "avant", head: "var(--f-syne)", body: "var(--f-inter)" },
   { id: "corporate", head: "var(--f-montserrat)", body: "var(--f-inter)" },
+  { id: "sf", head: "var(--f-inter)", body: "var(--f-inter)", headTight: true },
+  { id: "grotesk", head: "var(--f-dmsans)", body: "var(--f-dmsans)", headTight: true },
+  { id: "scholar", head: "var(--f-garamond)", body: "var(--f-inter)" },
 ];
 
 export const fontPairById = (id: string) => FONT_PAIRS.find((f) => f.id === id) ?? FONT_PAIRS[0];

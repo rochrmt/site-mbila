@@ -41,6 +41,13 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.01em;
 }
+/* Titres semi-gras serrés (polices « tech » / grotesques) */
+.site[data-tight] h1.font-s-head,
+.site[data-tight] h2.font-s-head,
+.site[data-tight] h3.font-s-head {
+  font-weight: 600;
+  letter-spacing: -0.022em;
+}
 
 /* ── Apparition au scroll ─────────────────────────────────────── */
 .site .rv {
@@ -253,6 +260,13 @@ body {
   background: linear-gradient(120deg, var(--c-fg) 20%, var(--c-primary) 60%, var(--c-accent));
   -webkit-background-clip: text;
   background-clip: text;
+}
+/* Dégradé lumineux des annonces « keynote » (fond noir) */
+.sig-grad {
+  background: linear-gradient(90deg, var(--c-accent), #a974ff 55%, #ff6fb5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .scroll-hint span {

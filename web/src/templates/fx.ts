@@ -37,4 +37,5 @@ export const FX_IDS = new Set<string>(FX_LIST.map((f) => f.id));
 export const FONT_LABELS: Record<string, string> = {
   classic: "Classique", luxe: "Luxe", modern: "Moderne", geo: "Géométrique", friendly: "Amical",
   editorial: "Éditorial", impact: "Impact", "soft-serif": "Serif doux", avant: "Avant-garde", corporate: "Corporate",
+  sf: "Épuré tech", grotesk: "Grotesque doux", scholar: "Académique",
 };

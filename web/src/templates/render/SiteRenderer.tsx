@@ -7,6 +7,7 @@ import { FloatingCta, Footer, Nav, StoreBand } from "./chrome";
 import Hero from "./hero";
 import type { SectionProps } from "./parts";
 import { About, Contact, CtaBlock, Education, Faq, Gallery, Marquee, Services, Steps, Testimonials, Works } from "./sections";
+import { SIG } from "./signature";
 
 const MAP: Record<string, (p: SectionProps) => React.ReactNode> = {
   hero: Hero,
@@ -55,7 +56,7 @@ export default function SiteRenderer({
   const [r, br] = RADIUS[tpl.radius];
   // Sections remélangées de façon déterministe : même template + site différent
   // (slug) = combinaison différente de variantes (services, galerie…).
-  const mixed = mixSections(tpl.sections, `${tpl.id}|${slug || data.name}`);
+  const mixed = tpl.fixed ? tpl.sections : mixSections(tpl.sections, `${tpl.id}|${slug || data.name}`);
   const sections = data.category === "portfolio" ? portfolioSections(mixed) : mixed;
   const style = {
     "--c-bg": p.bg,
@@ -79,6 +80,7 @@ export default function SiteRenderer({
       data-anim={level}
       data-dark={p.dark || undefined}
       data-upper={f.headUpper || undefined}
+      data-tight={f.headTight || undefined}
       data-fx={fx.join(" ") || undefined}
       style={style}
       className="site min-h-screen bg-s-bg font-s-body text-s-fg antialiased"
@@ -87,7 +89,7 @@ export default function SiteRenderer({
       <Nav d={data} tpl={tpl} />
       <main>
         {sections.map(([key, v], i) => {
-          const C = MAP[key];
+          const C = SIG[key]?.[v] ?? MAP[key];
           return (
             <Fragment key={key + i}>
               {C ? <C d={data} v={v} tpl={tpl} slug={slug} /> : null}

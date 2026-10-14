@@ -171,6 +171,18 @@ export const TEMPLATES: Template[] = [
     sections: "hero:fullscreen about:stats services:alternating steps:timeline gallery:grid testimonials:cards faq:accordion contact:split" }),
   t({ id: "kiosque", name: "Kiosque", description: "Boutique vivante, produits en avant", categories: ["shop", "sales", "bakery", "fashion", "jewelry"], moods: ["playful", "modern", "warm"], anim: "rich", palette: "coral", alt: ["sunny", "citrus", "lavender"], fonts: "friendly", radius: "full", nav: "solid",
     sections: "hero:collage marquee:text services:products about:split gallery:strip testimonials:cards faq:accordion cta:band contact:split" }),
+
+  // ── Signatures grandes marques (composition figée, jamais remélangée) ──
+  t({ id: "lotus", name: "Lotus", description: "Palace contemporain : plein écran cinéma, barre de réservation, carrousel de destinations", categories: ["hotel", "spa", "restaurant", "events", "realestate"], moods: ["luxury", "elegant", "minimal"], anim: "subtle", palette: "pearl", alt: ["noir-gold", "sand", "forest"], fonts: "luxe", radius: "none", nav: "luxe", footer: "center", fixed: true,
+    sections: "hero:cinema about:intro services:rail cta:editorial gallery:strip testimonials:quote faq:accordion contact:split" }),
+  t({ id: "lumen", name: "Lumen", description: "Vitrine produit épurée : titres géants, tuiles grand format, annonce sur fond noir", categories: ["tech", "shop", "sales", "photography", "music", "auto"], moods: ["minimal", "modern", "elegant"], anim: "rich", palette: "studio", alt: ["graphite", "snow"], fonts: "sf", radius: "lg", nav: "glass", footer: "fine", fixed: true,
+    sections: "hero:product services:tiles about:keynote gallery:rail testimonials:cards faq:accordion contact:card" }),
+  t({ id: "sentier", name: "Sentier", description: "Boutique naturelle : photo lifestyle, rayon produits défilant, valeurs illustrées", categories: ["shop", "fashion", "sales", "sport", "agriculture", "fitness"], moods: ["warm", "minimal", "modern"], anim: "subtle", palette: "oat", alt: ["sand", "sage", "snow"], fonts: "geo", radius: "sm", nav: "shop", footer: "dark", fixed: true,
+    sections: "hero:lifestyle services:shelf gallery:tiles steps:values about:split testimonials:cards faq:accordion contact:split" }),
+  t({ id: "rosee", name: "Rosée", description: "Beauté pop et douce : aplat pastel, pastilles de catégories, manifeste final", categories: ["salon", "spa", "fashion", "jewelry", "shop", "sales"], moods: ["playful", "minimal", "elegant", "warm"], anim: "subtle", palette: "petal", alt: ["blush", "lavender", "snow"], fonts: "grotesk", radius: "md", nav: "shop", footer: "big", fixed: true,
+    sections: "hero:beauty marquee:chips services:shelf gallery:tiles about:manifesto testimonials:cards faq:accordion contact:card" }),
+  t({ id: "athenee", name: "Athénée", description: "Grande institution : barre couleur, encart sur photo, actualités à la une", categories: ["education", "legal", "medical", "consulting", "sport"], moods: ["corporate", "elegant", "minimal"], anim: "subtle", palette: "oxford", alt: ["sky", "snow", "sage"], fonts: "scholar", radius: "none", nav: "academic", footer: "dark", fixed: true,
+    sections: "hero:panel services:news about:stats steps:band testimonials:quote faq:accordion contact:split" }),
 ];
 
 export const templateById = (id: string) => TEMPLATES.find((x) => x.id === id) ?? TEMPLATES[0];

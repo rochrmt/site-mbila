@@ -71,7 +71,7 @@ export type Palette = {
   ink?: string;
 };
 
-export type FontPair = { id: string; head: string; body: string; headUpper?: boolean };
+export type FontPair = { id: string; head: string; body: string; headUpper?: boolean; headTight?: boolean };
 
 export type Template = {
   id: string;
@@ -84,7 +84,9 @@ export type Template = {
   altPalettes: string[];
   fonts: string;
   radius: "none" | "sm" | "md" | "lg" | "full";
-  nav: "overlay" | "solid" | "centered" | "minimal";
-  footer: "simple" | "big";
+  nav: "overlay" | "solid" | "centered" | "minimal" | "luxe" | "glass" | "shop" | "academic";
+  footer: "simple" | "big" | "center" | "fine" | "dark";
   sections: Section[];
+  // Design « signature » : sections jamais remélangées (la composition fait le style)
+  fixed?: boolean;
 };

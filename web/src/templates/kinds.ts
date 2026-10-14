@@ -15,9 +15,21 @@ export const SECTION_KINDS: { id: string; label: string; variants: { id: string;
       { id: "minimal", label: "Minimal" },
       { id: "portrait", label: "Portrait (portfolio)" },
       { id: "split", label: "Divisé" },
+      { id: "cinema", label: "Cinéma + barre de réservation" },
+      { id: "product", label: "Produit centré" },
+      { id: "lifestyle", label: "Lifestyle (texte en bas)" },
+      { id: "beauty", label: "Moitié couleur / moitié photo" },
+      { id: "panel", label: "Image + encart institutionnel" },
     ],
   },
-  { id: "marquee", label: "Bandeau défilant", variants: [{ id: "text", label: "Mots-clés" }] },
+  {
+    id: "marquee",
+    label: "Bandeau",
+    variants: [
+      { id: "text", label: "Mots-clés défilants" },
+      { id: "chips", label: "Pastilles de catégories" },
+    ],
+  },
   {
     id: "about",
     label: "À propos",
@@ -25,6 +37,9 @@ export const SECTION_KINDS: { id: string; label: string; variants: { id: string;
       { id: "split", label: "Image + texte" },
       { id: "stats", label: "Chiffres" },
       { id: "quote", label: "Citation" },
+      { id: "intro", label: "Introduction centrée + icônes" },
+      { id: "keynote", label: "Grande annonce sur fond noir" },
+      { id: "manifesto", label: "Manifeste" },
     ],
   },
   {
@@ -37,6 +52,10 @@ export const SECTION_KINDS: { id: string; label: string; variants: { id: string;
       { id: "alternating", label: "Alterné grand format" },
       { id: "products", label: "Produits (boutique)" },
       { id: "numbered", label: "Liste numérotée" },
+      { id: "rail", label: "Carrousel de destinations" },
+      { id: "tiles", label: "Tuiles produit grand format" },
+      { id: "shelf", label: "Rayon produits défilant" },
+      { id: "news", label: "Actualités (à la une)" },
     ],
   },
   {
@@ -53,6 +72,8 @@ export const SECTION_KINDS: { id: string; label: string; variants: { id: string;
     variants: [
       { id: "cards", label: "Cartes" },
       { id: "timeline", label: "Chronologie" },
+      { id: "values", label: "Valeurs illustrées" },
+      { id: "band", label: "Bandeau couleur 3 colonnes" },
     ],
   },
   {
@@ -62,6 +83,8 @@ export const SECTION_KINDS: { id: string; label: string; variants: { id: string;
       { id: "grid", label: "Grille" },
       { id: "masonry", label: "Mosaïque" },
       { id: "strip", label: "Bande défilante" },
+      { id: "rail", label: "Carrousel grand format" },
+      { id: "tiles", label: "3 tuiles légendées" },
     ],
   },
   {
@@ -79,6 +102,7 @@ export const SECTION_KINDS: { id: string; label: string; variants: { id: string;
     variants: [
       { id: "band", label: "Bandeau" },
       { id: "image", label: "Image de fond" },
+      { id: "editorial", label: "Image + texte éditorial" },
     ],
   },
   {
@@ -91,8 +115,11 @@ export const SECTION_KINDS: { id: string; label: string; variants: { id: string;
   },
 ];
 
-export const NAV_LABELS = { overlay: "Superposé (sur l'image)", solid: "Barre classique", centered: "Centré", minimal: "Minimal" } as const;
-export const FOOTER_LABELS = { simple: "Simple", big: "Grand pied de page" } as const;
+export const NAV_LABELS = {
+  overlay: "Superposé (sur l'image)", solid: "Barre classique", centered: "Centré", minimal: "Minimal",
+  luxe: "Luxe (logo centré + Réserver)", glass: "Fine barre translucide", shop: "Boutique (bandeau d'annonce)", academic: "Institutionnel (barre couleur)",
+} as const;
+export const FOOTER_LABELS = { simple: "Simple", big: "Grand pied de page", center: "Centré élégant", fine: "Fin (colonnes discrètes)", dark: "Sombre en couleur" } as const;
 export const RADIUS_LABELS = { none: "Anguleux", sm: "Légèrement arrondi", md: "Arrondi", lg: "Très arrondi", full: "Maximal" } as const;
 export const ANIM_LABELS = { none: "Aucune animation", subtle: "Fluide", rich: "Spectaculaire" } as const;
 export const MOOD_LABELS = { elegant: "Élégant", modern: "Moderne", bold: "Audacieux", minimal: "Minimal", warm: "Chaleureux", luxury: "Luxe", playful: "Ludique", corporate: "Corporate" } as const;

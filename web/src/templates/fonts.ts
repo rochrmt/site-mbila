@@ -1,7 +1,9 @@
 import {
   Bebas_Neue,
   Cormorant_Garamond,
+  DM_Sans,
   DM_Serif_Display,
+  EB_Garamond,
   Fraunces,
   Inter,
   Manrope,
@@ -25,9 +27,11 @@ const manrope = Manrope({ subsets: ["latin"], variable: "--f-manrope", preload: 
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400", variable: "--f-bebas", preload: false });
 const dmserif = DM_Serif_Display({ subsets: ["latin"], weight: "400", variable: "--f-dmserif", preload: false });
 const syne = Syne({ subsets: ["latin"], variable: "--f-syne", preload: false });
+const dmsans = DM_Sans({ subsets: ["latin"], variable: "--f-dmsans", preload: false });
+const garamond = EB_Garamond({ subsets: ["latin"], variable: "--f-garamond", preload: false });
 
 export const fontVariables = [
-  inter, playfair, cormorant, montserrat, space, outfit, poppins, fraunces, manrope, bebas, dmserif, syne,
+  inter, playfair, cormorant, montserrat, space, outfit, poppins, fraunces, manrope, bebas, dmserif, syne, dmsans, garamond,
 ]
   .map((f) => f.variable)
   .join(" ");
