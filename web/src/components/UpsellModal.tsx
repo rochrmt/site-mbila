@@ -32,7 +32,7 @@ export default function UpsellModal({ siteId, title, text }: { siteId: number; t
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-[#0e0d16] shadow-2xl shadow-black/60"
+        className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-[#0e0d16] text-white shadow-2xl shadow-black/60"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="brand-grad h-1.5 w-full" />
@@ -44,7 +44,7 @@ export default function UpsellModal({ siteId, title, text }: { siteId: number; t
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-fuchsia-500/15 text-fuchsia-300">
             <Database size={22} />
           </div>
-          <h3 className="mt-4 font-display text-xl font-bold leading-snug">{title}</h3>
+          <h3 className="mt-4 font-display text-xl font-bold leading-snug text-white">{title}</h3>
           <p className="mt-2 text-sm leading-relaxed text-white/55">{text}</p>
           <div className="mt-6 flex flex-col gap-2.5">
             <a href={WA} target="_blank" rel="noopener"

@@ -658,31 +658,11 @@ export default function Editor({
 
             {tab === "settings" && (
               <>
-                <div className="rounded-xl border border-white/10 p-4">
-                  <p className="font-semibold">Adresse du site</p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <code className="flex-1 truncate rounded-lg bg-white/5 px-3 py-2.5 text-sm">{url}</code>
-                    <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="grid h-10 w-10 place-items-center rounded-lg bg-white/5 hover:bg-white/10" aria-label="Copier">{copied ? <Check size={16} /> : <Copy size={16} />}</button>
-                  </div>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ${d.name} : ${url}`)}`} target="_blank" className="mt-3 block rounded-lg bg-[#25D366] py-2.5 text-center text-sm font-semibold text-black">Partager sur WhatsApp</a>
-                  {!domains.some((x) => x.status === "actif") && (
-                    <p className="mt-3 rounded-lg border border-cyan-400/20 bg-cyan-400/[0.06] px-3 py-2 text-[11px] leading-relaxed text-cyan-100/80">
-                      💡 Plus pro avec <b>votre-domaine.com</b> — demandez-le juste en dessous, on s&apos;occupe de tout.
-                    </p>
-                  )}
-                  <p className="mt-3 text-xs leading-relaxed">
-                    {isPaid
-                      ? <span className="text-emerald-300/80">Abonnement actif jusqu&apos;au {new Date(site.paidUntil!).toLocaleDateString("fr-FR")} · <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">Renouveler / changer d&apos;offre →</Link></span>
-                      : site.paidUntil
-                        ? <span className="text-red-300/80">Abonnement expiré le {new Date(site.paidUntil).toLocaleDateString("fr-FR")} — le site n&apos;est plus visible. <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">Renouveler pour le remettre en ligne →</Link></span>
-                        : pendingPayment
-                          ? <span className="text-amber-300/80">Paiement en cours de vérification, le site passe en ligne à la confirmation.</span>
-                          : <span className="text-white/40">Publication : {price.original && <span className="line-through">{price.original.toLocaleString("fr-FR")}</span>} <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">{price.monthly.toLocaleString("fr-FR")} FCFA/mois →</Link>{price.label && <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">🏷️ {price.label}</span>}</span>}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-white/10 p-4">
-                  <p className="flex items-center gap-2 font-semibold"><Globe size={15} className="text-cyan-300" /> Domaine personnalisé</p>
-                  <p className="mt-1 text-xs text-white/50">Utilisez votre propre domaine (ex. monentreprise.com) au lieu de l&apos;adresse .mbila.ca.</p>
+                {/* Domaine perso : mis en avant en premier — c'est l'offre la plus valorisante */}
+                <div className="relative rounded-xl border border-cyan-400/40 bg-gradient-to-br from-cyan-500/[0.08] to-fuchsia-500/[0.08] p-4">
+                  <span className="absolute right-3 top-3 rounded-full bg-cyan-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300">Recommandé</span>
+                  <p className="flex items-center gap-2 font-semibold"><Globe size={16} className="text-cyan-300" /> Domaine personnalisé</p>
+                  <p className="mt-1.5 text-sm text-white/60">Utilisez votre propre domaine (ex. <b className="text-white/85">monentreprise.com</b>) au lieu de l&apos;adresse .mbila.ca.</p>
                   {domains.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {domains.map((dom) => (
@@ -713,7 +693,7 @@ export default function Editor({
                         value={domInput}
                         onChange={(e) => setDomInput(e.target.value)}
                         placeholder="monentreprise.com"
-                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none placeholder:text-white/25 focus:border-cyan-400/60"
+                        className="w-full rounded-lg border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm outline-none placeholder:text-white/25 focus:border-cyan-400/60"
                       />
                       <button
                         onClick={() => {
@@ -728,16 +708,33 @@ export default function Editor({
                           });
                         }}
                         disabled={pending || !domInput.trim()}
-                        className="w-full rounded-lg bg-cyan-500/15 py-2.5 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-500/25 disabled:opacity-40"
+                        className="w-full rounded-lg bg-cyan-400 py-2.5 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-40"
                       >
                         {pending ? "Envoi…" : "Demander ce domaine →"}
                       </button>
                       {domErr && <p className="text-xs text-red-300">{domErr}</p>}
-                      <p className="text-[11px] leading-relaxed text-white/35">
+                      <p className="text-[11px] leading-relaxed text-white/40">
                         La demande part chez Mbila : on vous contacte sur WhatsApp pour l&apos;achat du domaine et sa configuration. Rien à installer.
                       </p>
                     </div>
                   )}
+                </div>
+                <div className="rounded-xl border border-white/10 p-4">
+                  <p className="font-semibold">Adresse du site</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <code className="flex-1 truncate rounded-lg bg-white/5 px-3 py-2.5 text-sm">{url}</code>
+                    <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="grid h-10 w-10 place-items-center rounded-lg bg-white/5 hover:bg-white/10" aria-label="Copier">{copied ? <Check size={16} /> : <Copy size={16} />}</button>
+                  </div>
+                  <a href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ${d.name} : ${url}`)}`} target="_blank" className="mt-3 block rounded-lg bg-[#25D366] py-2.5 text-center text-sm font-semibold text-black">Partager sur WhatsApp</a>
+                  <p className="mt-3 text-xs leading-relaxed">
+                    {isPaid
+                      ? <span className="text-emerald-300/80">Abonnement actif jusqu&apos;au {new Date(site.paidUntil!).toLocaleDateString("fr-FR")} · <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">Renouveler / changer d&apos;offre →</Link></span>
+                      : site.paidUntil
+                        ? <span className="text-red-300/80">Abonnement expiré le {new Date(site.paidUntil).toLocaleDateString("fr-FR")} — le site n&apos;est plus visible. <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">Renouveler pour le remettre en ligne →</Link></span>
+                        : pendingPayment
+                          ? <span className="text-amber-300/80">Paiement en cours de vérification, le site passe en ligne à la confirmation.</span>
+                          : <span className="text-white/40">Publication : {price.original && <span className="line-through">{price.original.toLocaleString("fr-FR")}</span>} <Link href={`/payer/${site.id}`} className="font-semibold text-cyan-300 underline-offset-2 hover:underline">{price.monthly.toLocaleString("fr-FR")} FCFA/mois →</Link>{price.label && <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">🏷️ {price.label}</span>}</span>}
+                  </p>
                 </div>
                 {upsell && (
                   <div className="rounded-xl border border-fuchsia-400/20 bg-fuchsia-500/[0.04] p-4">
