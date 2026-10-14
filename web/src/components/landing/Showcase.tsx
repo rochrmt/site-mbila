@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent, type TouchEvent } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import ScaledFrame from "../ScaledFrame";
 
 // slug présent = vrai site client (aperçu live) ; mobile = capture téléphone du modèle disponible
@@ -155,7 +156,7 @@ export default function Showcase({ items }: { items: Item[] }) {
       onPointerEnter={(e) => { if (e.pointerType === "mouse") setPaused(true); }}
       onPointerMove={onMove}
       onPointerLeave={() => { setPaused(false); reset(); }}
-      className="relative mx-auto w-full max-w-5xl"
+      className="group relative mx-auto w-full max-w-5xl"
     >
       <div className="relative">
         {/* Lueur d'arrière-plan : sa teinte change à chaque site */}
@@ -245,6 +246,20 @@ export default function Showcase({ items }: { items: Item[] }) {
             />
           </div>
         </div>
+
+        {/* Flèches : visibles au tactile (le swipe seul n'était pas fiable), au survol sur desktop */}
+        <button
+          type="button" onClick={() => step(-1)} aria-label="Site précédent"
+          className="absolute -left-1 top-1/2 z-30 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-[#12121c]/85 text-white/80 shadow-xl backdrop-blur transition hover:bg-[#1c1c2c] md:-left-6 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <button
+          type="button" onClick={() => step(1)} aria-label="Site suivant"
+          className="absolute -right-1 top-1/2 z-30 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-[#12121c]/85 text-white/80 shadow-xl backdrop-blur transition hover:bg-[#1c1c2c] md:-right-6 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
+        >
+          <ChevronRight size={20} />
+        </button>
 
         {/* Badges flottants en parallaxe (profondeur) */}
         <div
