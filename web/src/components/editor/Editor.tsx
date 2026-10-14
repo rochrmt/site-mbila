@@ -72,7 +72,7 @@ function Thumb({ src, onClick, onRemove }: { src?: string; onClick: () => void; 
       {src && <img src={src} alt="" className="h-full w-full object-cover" />}
       <button onClick={onClick} className="absolute inset-0 grid place-items-center bg-black/50 text-xs font-semibold opacity-0 transition group-hover:opacity-100">Changer</button>
       {onRemove && (
-        <button onClick={onRemove} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/70 opacity-0 transition group-hover:opacity-100" aria-label="Retirer"><X size={12} /></button>
+        <button onClick={onRemove} className="absolute right-1 top-1 grid h-7 w-7 place-items-center rounded-full bg-red-500/80 text-white opacity-100 transition md:opacity-0 md:group-hover:opacity-100" aria-label="Retirer"><X size={14} /></button>
       )}
     </div>
   );
