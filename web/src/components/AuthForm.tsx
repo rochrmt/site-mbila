@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { login, signup } from "@/app/actions";
 import Logo from "./Logo";
+import PasswordInput from "./PasswordInput";
 
 const input =
   "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none transition placeholder:text-white/30 focus:border-fuchsia-400/60 focus:ring-4 focus:ring-fuchsia-500/10";
@@ -27,14 +28,11 @@ export default function AuthForm({ mode, next }: { mode: "signup" | "login"; nex
             ) : (
               <input name="identifier" required placeholder="Email ou téléphone" autoComplete="username" className={input} />
             )}
-            <input
+            <PasswordInput
               name="password"
-              type="password"
-              required
               minLength={isUp ? 8 : undefined}
               placeholder={isUp ? "Mot de passe (8 caractères min.)" : "Mot de passe"}
               autoComplete={isUp ? "new-password" : "current-password"}
-              className={input}
             />
             {!isUp && (
               <div className="flex justify-end">
@@ -44,13 +42,10 @@ export default function AuthForm({ mode, next }: { mode: "signup" | "login"; nex
               </div>
             )}
             {isUp && (
-              <input
+              <PasswordInput
                 name="password2"
-                type="password"
-                required
                 placeholder="Confirmez le mot de passe"
                 autoComplete="new-password"
-                className={input}
               />
             )}
             {isUp && (

@@ -2,6 +2,7 @@
 import { useActionState } from "react";
 import { KeyRound, Mail, Phone } from "lucide-react";
 import { changeIdentifier, changePassword, type FormState } from "@/app/actions";
+import PasswordInput from "./PasswordInput";
 
 const input =
   "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition placeholder:text-white/30 focus:border-fuchsia-400/60 focus:ring-4 focus:ring-fuchsia-500/10";
@@ -29,7 +30,7 @@ export default function AccountForm({ email }: { email: string | null }) {
           </div>
           <div>
             <label className={label} htmlFor="id-password">Confirmez avec votre mot de passe</label>
-            <input id="id-password" name="password" type="password" required placeholder="Mot de passe actuel" autoComplete="current-password" className={input} />
+            <PasswordInput id="id-password" name="password" placeholder="Mot de passe actuel" autoComplete="current-password" className={input} />
           </div>
           <Feedback state={idState} />
           <button disabled={idPending} className="rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-60">
@@ -45,16 +46,16 @@ export default function AccountForm({ email }: { email: string | null }) {
         <div className="mt-5 space-y-4">
           <div>
             <label className={label} htmlFor="current">Mot de passe actuel</label>
-            <input id="current" name="current" type="password" required placeholder="Mot de passe actuel" autoComplete="current-password" className={input} />
+            <PasswordInput id="current" name="current" placeholder="Mot de passe actuel" autoComplete="current-password" className={input} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className={label} htmlFor="password">Nouveau mot de passe</label>
-              <input id="password" name="password" type="password" required minLength={8} placeholder="8 caractères min." autoComplete="new-password" className={input} />
+              <PasswordInput id="password" name="password" minLength={8} placeholder="8 caractères min." autoComplete="new-password" className={input} />
             </div>
             <div>
               <label className={label} htmlFor="password2">Confirmation</label>
-              <input id="password2" name="password2" type="password" required placeholder="Retapez-le" autoComplete="new-password" className={input} />
+              <PasswordInput id="password2" name="password2" placeholder="Retapez-le" autoComplete="new-password" className={input} />
             </div>
           </div>
           <Feedback state={pwState} />
