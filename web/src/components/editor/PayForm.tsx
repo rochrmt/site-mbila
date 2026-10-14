@@ -36,7 +36,7 @@ export default function PayForm({ siteId, prices, onDone, online, manual = true 
   const amount = total.toLocaleString("fr-FR");
   const dur = DURATIONS.find((d) => d.months === months)!;
   const fullPrice = (pp.monthly * months).toLocaleString("fr-FR");
-  const promoLabel = pp.original ? (pp.label ?? "Promotion") : null;
+  const promoLabel = pp.label ?? (pp.original ? "Promotion" : null);
 
   async function send() {
     if (payer && !PHONE_OK(payer)) return setErr("Numéro invalide : entrez le numéro utilisé pour payer (ex : 72 67 91 75).");
@@ -98,7 +98,7 @@ export default function PayForm({ siteId, prices, onDone, online, manual = true 
                   {prices[p.id].original && <span className="mr-2 align-middle text-sm font-medium text-white/35 line-through">{prices[p.id].original!.toLocaleString("fr-FR")}</span>}
                   {totalFor(prices[p.id].monthly, months).toLocaleString("fr-FR")} FCFA
                 </p>
-                {prices[p.id].original && (
+                {(prices[p.id].original || prices[p.id].label) && (
                   <span className="mt-1.5 inline-block rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">🏷️ {prices[p.id].label ?? "Promotion"}</span>
                 )}
                 <p className="mt-1 text-xs text-white/50">{p.desc}</p>
@@ -123,7 +123,7 @@ export default function PayForm({ siteId, prices, onDone, online, manual = true 
             ))}
           </div>
           {dur.badge && <p className="mt-2 text-center text-xs text-emerald-300/80">Au lieu de {fullPrice} FCFA, vous économisez {(pp.monthly * months - total).toLocaleString("fr-FR")} F</p>}
-          {promoLabel && <p className="mt-3 text-center text-xs font-semibold text-emerald-300/90">🏷️ {promoLabel} appliquée sur votre tarif</p>}
+          {promoLabel && <p className="mt-3 text-center text-xs font-semibold text-emerald-300/90">🏷️ {promoLabel}{pp.original ? " appliquée sur votre tarif" : ""}</p>}
 
           {(online?.[`${plan}:${months}:${pp.monthly}`] ?? online?.[`${plan}:${months}`] ?? online?.[plan]) && (
             <form action={onlineAction} className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] p-4">
