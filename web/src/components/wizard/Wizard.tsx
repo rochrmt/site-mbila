@@ -49,13 +49,7 @@ const ANIMS: { id: AnimLevel; label: string; hint: string }[] = [
   { id: "rich", label: "Spectaculaire", hint: "Parallax, zoom, textes animés" },
 ];
 
-const CTAS: { id: CtaType; label: string; hint: string; Icon: typeof Phone }[] = [
-  { id: "whatsapp", label: "WhatsApp", hint: "Message pré-rempli", Icon: MessageCircle },
-  { id: "call", label: "Appel", hint: "Un clic, ça sonne", Icon: Phone },
-  { id: "email", label: "Email", hint: "Demandes détaillées", Icon: Mail },
-  { id: "booking", label: "Réservation", hint: "Formulaire de RDV", Icon: Calendar },
-  { id: "quote", label: "Devis", hint: "Formulaire de devis", Icon: FileText },
-];
+
 
 const CURRENCIES: Currency[] = ["FCFA", "CAD", "EUR", "USD"];
 
@@ -237,7 +231,7 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
       q: isPortfolio ? "Ajoutez votre photo : elle sera en grand sur votre portfolio." : "Pour les images, on fait comment ?",
       ok: isPortfolio ? (a.uploads?.length ?? 0) >= 1 : a.images === "stock" || (a.uploads?.length ?? 0) > 0,
     },
-    { key: "cta", q: "Comment vos clients doivent-ils vous contacter ?", ok: contactOk && (a.cta === "whatsapp" ? PHONE_OK(a.whatsapp || a.phone || "") : a.cta === "call" ? PHONE_OK(a.phone ?? "") : a.cta === "email" ? EMAIL_OK(a.email ?? "") : true) },
+    { key: "cta", q: "Vos coordonnées de contact", ok: contactOk && PHONE_OK(a.whatsapp || a.phone || "") },
     { key: "slug", q: "Dernière étape : choisissez l'adresse de votre site.", ok: slugState.ok && !slugState.checking },
   ];
   const cur = STEPS[step];
@@ -385,7 +379,7 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
                       {list.map((c) => {
                         const Icon = CAT_ICONS[c.icon] ?? CAT_ICONS.star;
                         return (
-                          <button key={c.id} onClick={() => { set({ category: c.id, cta: c.cta }); setTimeout(() => setStep(1), 250); }} className={`${card(a.category === c.id)} flex items-center gap-3 !p-4`}>
+                          <button key={c.id} onClick={() => { set({ category: c.id, cta: "whatsapp" }); setTimeout(() => setStep(1), 250); }} className={`${card(a.category === c.id)} flex items-center gap-3 !p-4`}>
                             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-fuchsia-300"><Icon size={20} /></span>
                             <span className="text-sm font-medium leading-tight">{c.label}</span>
                           </button>
@@ -750,14 +744,13 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
 
           {cur.key === "cta" && (
             <div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                {CTAS.map(({ id, label, hint, Icon }) => (
-                  <button key={id} onClick={() => set({ cta: id })} className={`${card(a.cta === id)} !p-4 text-center`}>
-                    <Icon className="mx-auto text-fuchsia-300" size={24} />
-                    <p className="mt-3 text-sm font-semibold">{label}</p>
-                    <p className="mt-1 text-[11px] text-white/40">{hint}</p>
-                  </button>
-                ))}
+              {/* Le contact client passe toujours par WhatsApp : pas de choix de canal */}
+              <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3.5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#25D366]/15 text-[#25D366]"><MessageCircle size={19} /></span>
+                <div>
+                  <p className="text-sm font-semibold">Vos clients vous contacteront sur WhatsApp</p>
+                  <p className="text-xs text-white/45">Le bouton de contact de votre site ouvrira une conversation WhatsApp avec votre numéro.</p>
+                </div>
               </div>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <input value={a.phone} onChange={(e) => set({ phone: e.target.value })} inputMode="tel" placeholder="Téléphone (ex : +237 6 99 00 00 00)" className={`${input} ${a.phone && !PHONE_OK(a.phone) ? "border-red-400/60" : ""}`} />
