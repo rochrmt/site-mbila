@@ -361,6 +361,10 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
           <div className="brand-grad grid h-11 w-11 shrink-0 place-items-center rounded-2xl shadow-lg shadow-fuchsia-500/30"><Wand2 size={20} /></div>
           <h1 className="pt-1 font-display text-2xl font-semibold leading-snug md:text-3xl"><Typed key={step} text={cur.q} /></h1>
         </div>
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-white/35">
+          <PenLine size={13} className="shrink-0" />
+          Pas de stress — tout est modifiable ensuite dans votre éditeur : textes, images, couleurs, tout.
+        </p>
 
         <div key={step} className="pop-in mt-10" style={{ animationDelay: "250ms" }}>
           {cur.key === "cat" && (
@@ -776,6 +780,10 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
                 {slugState.checking ? <><Loader2 size={14} className="animate-spin" /> Vérification…</> : slugState.ok ? <><Check size={14} /> Adresse disponible !</> : slugState.reason}
               </p>
               {err && <p className="mt-2 text-sm text-red-300">{err}</p>}
+              <p className="mt-6 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.06] px-4 py-3 text-xs leading-relaxed text-emerald-100/80">
+                <ShieldCheck size={14} className="mr-1.5 -mt-0.5 inline" />
+                Aucune crainte : après la génération, vous pourrez tout retoucher depuis votre éditeur — textes, images, couleurs, coordonnées. Rien n&apos;est définitif.
+              </p>
             </div>
           )}
         </div>
