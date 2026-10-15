@@ -19,6 +19,11 @@ export type Answers = {
   works?: string[];
   workImages?: Record<string, string>; // photo optionnelle par réalisation (portfolio)
   education?: { title: string; school: string; year: string }[]; // formation (portfolio, optionnel)
+  // Activité non répertoriée (category "other")
+  activity?: string;        // métier saisi (ex : Technicien de surface)
+  otherServices?: string[]; // prestations proposées
+  otherAbout?: string;      // présentation libre
+  otherAuto?: boolean;      // « générer automatiquement » : contenus neutres, modifiables ensuite
   moods: Mood[];
   color: ColorPref;
   anim: AnimLevel;
@@ -157,9 +162,28 @@ const PHOTO_WORKS = [
   { name: "Séance famille", tag: "Lifestyle" },
 ];
 
+// Descriptions neutres pour les prestations saisies (activité « autre »)
+const OTHER_SVC_DESC = [
+  "Une prestation réalisée avec soin, dans les délais convenus.",
+  "Un travail sérieux, adapté à votre besoin.",
+  "Qualité, rapidité et prix juste.",
+  "Un service fiable, sur lequel vous pouvez compter.",
+  "Réalisé par une équipe expérimentée et à l'écoute.",
+  "Sur demande, selon vos contraintes.",
+];
+const clip = (s: unknown, n: number) => String(s ?? "").trim().slice(0, n);
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 // ── Génération du contenu complet du site ────────────────────────
 export function generateSiteData(a: Answers): SiteData {
   const c = categoryById(a.category);
+  // Activité non répertoriée : le métier et les services saisis remplacent les contenus neutres
+  const isOther = c.id === "other";
+  const activity = isOther ? cap(clip(a.activity, 60)) : "";
+  const otherSvcs = isOther && !a.otherAuto
+    ? (Array.isArray(a.otherServices) ? a.otherServices : []).map((s) => clip(s, 60)).filter(Boolean).slice(0, 6)
+    : [];
+  const otherAbout = isOther && !a.otherAuto ? clip(a.otherAbout, 600) : "";
   // Le seed mélange nom + réponses : deux projets du même métier avec des
   // ambitions différentes n'obtiennent pas les mêmes textes ni les mêmes images.
   const r = rng(`${a.name}|${a.category}|${a.moods.join()}|${a.color}|${a.anim}`);
@@ -197,7 +221,10 @@ export function generateSiteData(a: Answers): SiteData {
   const svcSrc = resolvedSpec?.services ?? c.services;
   const kwSrc = resolvedSpec?.keywords ?? c.keywords;
 
-  const services = shuffle(svcSrc, r).map((s, i) => ({
+  const svcList = otherSvcs.length
+    ? otherSvcs.map((name, i) => ({ name, description: OTHER_SVC_DESC[i % OTHER_SVC_DESC.length] }))
+    : shuffle(svcSrc, r);
+  const services = svcList.map((s: { name: string; description: string; p?: number }, i) => ({
     name: s.name,
     description: s.description,
     // Un portfolio présente un savoir-faire, pas des produits : pas de prix affiché
@@ -218,20 +245,23 @@ export function generateSiteData(a: Answers): SiteData {
     ? { title: pick(WORKS_TITLES, r), items: workBank.slice(0, 6).map((w, i) => ({ ...w, year: String(baseYear + (i % 3)), image: a.workImages?.[w.name] ?? pool[(i + 2) % pool.length] })) }
     : undefined;
 
+  const where = a.city.trim() ? ` à ${a.city.trim()}` : "";
   return {
     name: a.name.trim(),
-    tagline: a.description?.trim() || f(pick(c.subtitles, r)).split(".")[0],
+    tagline: a.description?.trim() || activity || f(pick(c.subtitles, r)).split(".")[0],
     category: c.id,
     city: a.city.trim(),
     hero: {
-      title: role ?? f(pick(c.heroTitles, r)),
-      subtitle: a.description?.trim() || f(pick(c.subtitles, r)),
+      title: role ?? (activity ? `${activity}${where}` : f(pick(c.heroTitles, r))),
+      subtitle: a.description?.trim() || (activity
+        ? pick([`${a.name.trim()} : un service sérieux, rapide et soigné.`, "Un travail de qualité, des prix justes et une vraie écoute.", "Contactez-nous sur WhatsApp, réponse rapide."], r)
+        : f(pick(c.subtitles, r))),
       image: hero,
       images: [hero, ...pool.filter((x) => x !== hero).slice(0, 3)],
     },
     about: {
       title: pick(c.aboutTitles, r),
-      text: f(pick(c.aboutTexts, r)),
+      text: otherAbout || f(pick(c.aboutTexts, r)),
       image: portrait ?? (pool[0] === hero ? pool[1] : pool[0]),
       stats: shuffle(c.stats, r),
     },
@@ -248,7 +278,7 @@ export function generateSiteData(a: Answers): SiteData {
           .slice(0, 8)
       : undefined,
     faq: shuffle(isPortfolio ? PORTFOLIO_FAQ : [...c.faq, ...GENERIC_FAQ], r).slice(0, 4),
-    keywords: shuffle(kwSrc, r),
+    keywords: activity || otherSvcs.length ? [...(activity ? [activity] : []), ...otherSvcs, ...kwSrc].slice(0, 6) : shuffle(kwSrc, r),
     cta: { type: a.cta, label: ctaLabel(a.cta, c.id) },
     contact: {
       phone: a.phone?.trim() ?? "",
@@ -262,7 +292,7 @@ export function generateSiteData(a: Answers): SiteData {
       fonts: a.fonts && a.fonts !== "auto" && FONT_PAIRS.some((f) => f.id === a.fonts) ? a.fonts : undefined,
       fx: (a.fx ?? []).filter((x) => FX_IDS.has(x)),
       heroText: a.heroText && HERO_TEXT_IDS.has(a.heroText)
-        ? { mode: a.heroText as HeroTextMode, words: shuffle(kwSrc, r).slice(0, 5) }
+        ? { mode: a.heroText as HeroTextMode, words: (otherSvcs.length ? otherSvcs : shuffle(kwSrc, r)).slice(0, 5) }
         : undefined,
     },
   };

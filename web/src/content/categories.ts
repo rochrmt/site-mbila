@@ -1199,6 +1199,8 @@ export const guessSpec = (text: string) => SPEC_HINTS.find(([re]) => re.test(tex
 
 export const specById = (id: string) => PORTFOLIO_SPECS.find((s) => s.id === id);
 
+// Activité non répertoriée : contenus volontairement neutres (aucun métier
+// supposé) — le wizard les complète avec le métier et les services saisis.
 export const OTHER: CategoryDef = {
   ...CATEGORIES.find((c) => c.id === "consulting")!,
   id: "other",
@@ -1206,7 +1208,29 @@ export const OTHER: CategoryDef = {
   group: "Services professionnels",
   icon: "star",
   search: "autre",
+  cta: "whatsapp",
   heroTitles: ["L'excellence au service de nos clients", "{name}, votre partenaire de confiance", "Des solutions pensées pour vous"],
+  subtitles: [
+    "{name} met son savoir-faire à votre service, avec sérieux et réactivité.",
+    "Un service de qualité, des prix justes et une vraie écoute.",
+    "Contactez-nous, nous répondons rapidement.",
+  ],
+  aboutTitles: ["Qui sommes-nous ?", "Notre engagement", "À propos"],
+  aboutTexts: [
+    "{name} est né d'une envie simple : bien faire son métier et satisfaire chaque client. Basés à {city}, nous mettons notre expérience et notre sérieux au service de vos besoins.",
+    "Chez {name}, chaque demande compte. Écoute, réactivité et travail soigné : c'est ce qui nous permet de fidéliser nos clients depuis nos débuts.",
+  ],
+  servicesSubtitle: "Ce que nous faisons pour vous.",
+  steps: [
+    { title: "Vous nous contactez", text: "Sur WhatsApp, en quelques secondes." },
+    { title: "Nous échangeons", text: "Nous comprenons votre besoin et vous proposons une solution." },
+    { title: "Nous réalisons", text: "Un travail soigné, dans les délais convenus." },
+  ],
+  stats: [{ value: "100%", label: "clients écoutés" }, { value: "7j/7", label: "joignables sur WhatsApp" }, { value: "24h", label: "pour vous répondre" }],
+  testimonials: [],
+  faq: [],
+  keywords: ["Qualité", "Sérieux", "Réactivité", "Écoute", "Proximité", "Confiance"],
+  hours: "Lun – Sam : 8h00 – 18h00",
   servicesTitle: "Nos services",
   services: [
     { name: "Service principal", description: "Notre prestation phare, pensée pour vous." },

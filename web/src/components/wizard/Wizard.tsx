@@ -2,8 +2,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Calculator, Calendar, Camera, ChartColumn, Check, Clapperboard, Code, FileText, ImagePlus, Landmark, Loader2, Mail, Megaphone, MessageCircle,
-  MonitorSmartphone, Palette, PenLine, PenTool, Phone, Plus, Ruler, Search, ShieldCheck, Smartphone, Sparkles, SquareKanban, Upload, Users, Wand2, Wrench, X,
+  ArrowLeft, Calculator, Camera, ChartColumn, Check, Clapperboard, Code, ImagePlus, Landmark, Loader2, Megaphone, MessageCircle,
+  MonitorSmartphone, Palette, PenLine, PenTool, Plus, Ruler, Search, ShieldCheck, Smartphone, Sparkles, SquareKanban, Upload, Users, Wand2, Wrench, X,
 } from "lucide-react";
 import { checkSlug, createFromAnswers } from "@/app/actions";
 import type { Answers, Currency } from "@/content/generate";
@@ -159,6 +159,7 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
     category: "", name: "", city: "", description: "", specialty: "", specialtyText: "", works: [], moods: [], color: "auto", anim: "subtle",
     images: "stock", uploads: [], cta: "whatsapp", phone: "", whatsapp: "", email: user.email, currency: "FCFA",
     fonts: "auto", fx: [], heroText: "none",
+    activity: "", otherServices: [], otherAbout: "", otherAuto: false,
   });
   const set = (p: Partial<Answers>) => setA((x) => ({ ...x, ...p }));
   const [q, setQ] = useState("");
@@ -168,13 +169,29 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
   const [err, setErr] = useState("");
   const [gen, setGen] = useState(0);
   const [workInput, setWorkInput] = useState("");
+  const [svcInput, setSvcInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const workPhotoRef = useRef<HTMLInputElement>(null);
   const workPhotoFor = useRef<string | null>(null);
 
   const cat = categories.find((c) => c.id === a.category);
   const isPortfolio = a.category === "portfolio";
+  const isOther = a.category === "other";
+  // Photo obligatoire : portfolio (portrait) et activité non répertoriée détaillée
+  const needPhoto = isPortfolio || (isOther && !a.otherAuto);
   const spec = specs.find((s) => s.id === a.specialty);
+
+  const addSvc = () => {
+    const n = svcInput.trim().slice(0, 60);
+    if (!n || (a.otherServices ?? []).includes(n)) return;
+    set({ otherServices: [...(a.otherServices ?? []), n].slice(0, 6) });
+    setSvcInput("");
+  };
+  const pickOther = () => {
+    const t = q.trim();
+    set({ category: "other", cta: "whatsapp", activity: t ? t.charAt(0).toUpperCase() + t.slice(1) : a.activity });
+    setTimeout(() => setStep(1), 250);
+  };
 
   const setEdu = (i: number, patch: Partial<{ title: string; school: string; year: string }>) =>
     set({ education: (a.education ?? []).map((e, j) => (j === i ? { ...e, ...patch } : e)) });
@@ -195,8 +212,10 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
 
   const filtered = useMemo(() => {
     const s = slugify(q).replace(/-/g, " ");
-    return s ? categories.filter((c) => slugify(c.label + " " + c.search).replace(/-/g, " ").includes(s)) : categories;
+    // « Autre activité » reste toujours proposée, quelle que soit la recherche
+    return s ? categories.filter((c) => c.id === "other" || slugify(c.label + " " + c.search).replace(/-/g, " ").includes(s)) : categories;
   }, [q, categories]);
+  const noMatch = !!q.trim() && filtered.every((c) => c.id === "other");
 
   // Champs de contact : tout champ rempli doit être valide
   const contactOk =
@@ -210,9 +229,18 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
       key: "name",
       q: isPortfolio
         ? "Parfait, un portfolio ! Quels sont vos noms et prénoms, et où êtes-vous ?"
-        : `Super, ${cat?.label.toLowerCase() ?? "votre activité"} ! Comment s'appelle-t-elle, et où êtes-vous ?`,
+        : isOther
+          ? "Super ! Comment s'appelle votre activité, et où êtes-vous ?"
+          : `Super, ${cat?.label.toLowerCase() ?? "votre activité"} ! Comment s'appelle-t-elle, et où êtes-vous ?`,
       ok: a.name.trim().length >= 2,
     },
+    ...(isOther
+      ? [{
+          key: "other",
+          q: "Parlez-nous un peu de votre activité, pour un site qui vous ressemble.",
+          ok: !!a.otherAuto || ((a.activity ?? "").trim().length >= 3 && (a.otherServices?.length ?? 0) >= 1),
+        }]
+      : []),
     ...(isPortfolio
       ? [
           { key: "spec", q: `${a.name.trim().split(" ")[0] || "Parfait"}, quel est votre domaine de spécialité ?`, ok: !!a.specialty },
@@ -228,8 +256,12 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
     { key: "fx", q: "Envie d'effets ? Basique, premium ou audacieux : à vous de voir.", ok: true },
     {
       key: "img",
-      q: isPortfolio ? "Ajoutez votre photo : elle sera en grand sur votre portfolio." : "Pour les images, on fait comment ?",
-      ok: isPortfolio ? (a.uploads?.length ?? 0) >= 1 : a.images === "stock" || (a.uploads?.length ?? 0) > 0,
+      q: isPortfolio
+        ? "Ajoutez votre photo : elle sera en grand sur votre portfolio."
+        : needPhoto
+          ? "Ajoutez une première photo de votre activité : elle sera l'image principale de votre site."
+          : "Pour les images, on fait comment ?",
+      ok: needPhoto ? (a.uploads?.length ?? 0) >= 1 : a.images === "stock" || (a.uploads?.length ?? 0) > 0,
     },
     { key: "cta", q: "Vos coordonnées de contact", ok: contactOk && PHONE_OK(a.whatsapp || a.phone || "") },
     { key: "slug", q: "Dernière étape : choisissez l'adresse de votre site.", ok: slugState.ok && !slugState.checking },
@@ -373,6 +405,17 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                 <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher : restaurant, école, boutique, coiffure…" className={`${input} pl-12`} />
               </div>
+              {noMatch && (
+                <button onClick={pickOther} className={`${card(true)} mb-8 flex w-full items-center gap-4`}>
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-fuchsia-500/15 text-fuchsia-200"><Sparkles size={22} /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-semibold uppercase tracking-widest text-fuchsia-300">Autre activité</span>
+                    <span className="mt-1 block truncate text-lg font-semibold">« {q.trim()} »</span>
+                    <span className="mt-0.5 block text-sm text-white/50">Pas dans la liste ? Aucun souci, on crée votre site avec quelques précisions.</span>
+                  </span>
+                  <span className="shrink-0 text-fuchsia-200">→</span>
+                </button>
+              )}
               {groups.map((g) => {
                 const list = filtered.filter((c) => c.group === g);
                 if (!list.length) return null;
@@ -383,7 +426,7 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
                       {list.map((c) => {
                         const Icon = CAT_ICONS[c.icon] ?? CAT_ICONS.star;
                         return (
-                          <button key={c.id} onClick={() => { set({ category: c.id, cta: "whatsapp" }); setTimeout(() => setStep(1), 250); }} className={`${card(a.category === c.id)} flex items-center gap-3 !p-4`}>
+                          <button key={c.id} onClick={() => { if (c.id === "other") return pickOther(); set({ category: c.id, cta: "whatsapp" }); setTimeout(() => setStep(1), 250); }} className={`${card(a.category === c.id)} flex items-center gap-3 !p-4`}>
                             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-fuchsia-300"><Icon size={20} /></span>
                             <span className="text-sm font-medium leading-tight">{c.label}</span>
                           </button>
@@ -540,6 +583,68 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
             </div>
           )}
 
+          {cur.key === "other" && (
+            <div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button onClick={() => set({ otherAuto: false })} className={card(!a.otherAuto)}>
+                  <span className="absolute right-3 top-3 rounded-full bg-fuchsia-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-200">Recommandé</span>
+                  <PenLine size={20} className="mb-3 text-fuchsia-300" />
+                  <p className="font-semibold">Je précise mon activité</p>
+                  <p className="mt-1 text-sm text-white/45">Métier, prestations, présentation : des textes qui vous correspondent vraiment.</p>
+                </button>
+                <button onClick={() => set({ otherAuto: true })} className={card(!!a.otherAuto)}>
+                  <Sparkles size={20} className="mb-3 text-fuchsia-300" />
+                  <p className="font-semibold">Générer automatiquement</p>
+                  <p className="mt-1 text-sm text-white/45">Pressé ? On génère tout, vous personnalisez ensuite dans votre éditeur.</p>
+                </button>
+              </div>
+
+              {a.otherAuto ? (
+                <p className="mt-6 flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-sm leading-relaxed text-white/60">
+                  <Wand2 size={17} className="mt-0.5 shrink-0 text-fuchsia-300" />
+                  <span>Votre site sera créé avec des textes et des photos généraux. Pensez à les remplacer par les vôtres depuis l&apos;éditeur : ça ne prend que quelques minutes.</span>
+                </p>
+              ) : (
+                <div className="mt-7 space-y-6">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-white/70">Votre métier <span className="text-fuchsia-300">*</span></label>
+                    <input value={a.activity ?? ""} maxLength={60} onChange={(e) => set({ activity: e.target.value })} placeholder="Ex : Technicien de surface, couturier, déménageur…" className={input} />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-white/70">Vos prestations <span className="text-fuchsia-300">*</span> <span className="font-normal text-white/35">(1 minimum, 6 maximum)</span></label>
+                    <div className="flex gap-3">
+                      <input
+                        value={svcInput}
+                        maxLength={60}
+                        onChange={(e) => setSvcInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); addSvc(); } }}
+                        placeholder="Ex : Nettoyage de bureaux"
+                        className={input}
+                      />
+                      <button onClick={addSvc} disabled={!svcInput.trim() || (a.otherServices?.length ?? 0) >= 6} aria-label="Ajouter la prestation" className="brand-grad shrink-0 rounded-xl px-5 font-semibold disabled:opacity-30"><Plus size={18} /></button>
+                    </div>
+                    {(a.otherServices?.length ?? 0) > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {a.otherServices!.map((s) => (
+                          <span key={s} className="flex items-center gap-2 rounded-full bg-fuchsia-500/15 px-4 py-2 text-sm">
+                            {s}
+                            <button onClick={() => set({ otherServices: a.otherServices!.filter((x) => x !== s) })} aria-label={`Retirer ${s}`}><X size={14} className="text-white/50 hover:text-white" /></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-white/70">Présentez-vous en quelques lignes <span className="font-normal text-white/35">(facultatif)</span></label>
+                    <textarea rows={3} maxLength={600} value={a.otherAbout ?? ""} onChange={(e) => set({ otherAbout: e.target.value })} placeholder="Ex : Depuis 2018, nous assurons l'entretien de bureaux et de résidences à Bangui, avec une équipe formée et du matériel professionnel." className={input} />
+                    <p className="mt-2 text-xs text-white/35">Ce texte apparaîtra dans la section « À propos » de votre site.</p>
+                  </div>
+                  <p className="text-xs leading-relaxed text-white/35">Les avis clients et la FAQ seront rédigés de façon générale : remplacez-les par les vôtres dans l&apos;éditeur.</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {cur.key === "desc" && (
             <div>
               <textarea autoFocus rows={3} maxLength={220} value={a.description} onChange={(e) => set({ description: e.target.value })} placeholder="Ex : Des plats maison généreux, préparés chaque jour avec des produits frais du marché." className={input} />
@@ -670,20 +775,24 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
 
           {cur.key === "img" && (
             <div>
-              {isPortfolio ? (
-                /* Portfolio : la photo du client est obligatoire — elle devient le visage du site */
+              {needPhoto ? (
+                /* Photo obligatoire : portrait (portfolio) ou image principale (activité non répertoriée) */
                 <div>
                   <div className={card(true)}>
                     <div className="flex items-center gap-4">
                       <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-fuchsia-500/15 text-fuchsia-200"><ImagePlus size={26} /></span>
                       <div>
-                        <p className="font-semibold">Votre photo <span className="text-fuchsia-300">(obligatoire)</span></p>
-                        <p className="mt-1 text-sm text-white/45">Portrait ou photo de vous au travail, c&apos;est elle qui accueillera vos visiteurs. Ajoutez aussi des photos de vos réalisations si vous en avez.</p>
+                        <p className="font-semibold">{isPortfolio ? "Votre photo" : "Votre première photo"} <span className="text-fuchsia-300">(obligatoire)</span></p>
+                        <p className="mt-1 text-sm text-white/45">
+                          {isPortfolio
+                            ? "Portrait ou photo de vous au travail, c'est elle qui accueillera vos visiteurs. Ajoutez aussi des photos de vos réalisations si vous en avez."
+                            : "Vous au travail, votre équipe, vos locaux ou un résultat : elle sera en grand en haut de votre site. Ajoutez-en d'autres si vous voulez."}
+                        </p>
                       </div>
                     </div>
                     {!(a.uploads?.length ?? 0) && (
                       <button onClick={() => fileRef.current?.click()} className="brand-grad mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold transition hover:brightness-110">
-                        <Upload size={16} /> Choisir ma photo
+                        {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />} Choisir ma photo
                       </button>
                     )}
                   </div>
@@ -725,7 +834,7 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
                 </span>
               </button>
               <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => upload(e.target.files)} />
-              {(a.images === "own" || isPortfolio) && (
+              {(a.images === "own" || needPhoto) && (
                 <div className="mt-6">
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
                     {a.uploads?.map((u) => (
