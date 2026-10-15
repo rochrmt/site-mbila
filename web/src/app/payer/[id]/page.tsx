@@ -26,6 +26,8 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
   const pending = getPaymentsBySite(site.id).find((p) => p.status === "en_attente");
   const online = site.published && paid && !site.suspended;
   const manualOn = manualPaymentEnabled(); // réglage admin : transfert OM autorisé ou non
+  // Numéro à débiter proposé par défaut : téléphone du compte, sinon WhatsApp du site
+  const defaultPhone = user.phone || site.data.contact?.whatsapp || site.data.contact?.phone || "";
 
   return (
     <div className="min-h-screen bg-[#07070c] text-white">
@@ -89,8 +91,19 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
                 </p>
                 {pending.method === "chariow" && (
                   <div className="mx-auto mt-5 flex max-w-sm flex-col gap-2">
-                    <form action={retryOnlinePayment}>
+                    <form action={retryOnlinePayment} className="flex flex-col gap-2">
                       <input type="hidden" name="payment_id" value={pending.id} />
+                      <label className="text-left text-xs font-semibold text-white/60">
+                        Numéro Mobile Money à débiter
+                        <input
+                          name="payer_phone"
+                          defaultValue={pending.payer_phone || defaultPhone}
+                          inputMode="tel"
+                          required
+                          placeholder="Ex : 72 00 00 00"
+                          className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-emerald-400/60"
+                        />
+                      </label>
                       <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-black transition hover:brightness-110">
                         <RefreshCw size={15} /> Réessayer le paiement en ligne
                       </button>
@@ -114,7 +127,7 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
                 <h2 className="font-display text-2xl font-bold">{online ? "Prolonger ou changer d'offre" : "Régulariser mon abonnement"}</h2>
                 <p className="mt-1 text-sm text-white/50">Le temps payé s&apos;ajoute à la fin de votre abonnement actuel, rien n&apos;est perdu.</p>
                 <div className="mt-5">
-                  <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowPricesForSite(site.category, sitePlanPrice("essentiel", site.category).monthly)} manual={manualOn} />
+                  <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowPricesForSite(site.category, sitePlanPrice("essentiel", site.category).monthly)} manual={manualOn} defaultPhone={defaultPhone} />
                 </div>
               </div>
             )}
@@ -135,8 +148,19 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
             </p>
             {pending.method === "chariow" && (
               <div className="mx-auto mt-6 flex max-w-sm flex-col gap-2">
-                <form action={retryOnlinePayment}>
+                <form action={retryOnlinePayment} className="flex flex-col gap-2">
                   <input type="hidden" name="payment_id" value={pending.id} />
+                  <label className="text-left text-xs font-semibold text-white/60">
+                    Numéro Mobile Money à débiter
+                    <input
+                      name="payer_phone"
+                      defaultValue={pending.payer_phone || defaultPhone}
+                      inputMode="tel"
+                      required
+                      placeholder="Ex : 72 00 00 00"
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-emerald-400/60"
+                    />
+                  </label>
                   <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-black transition hover:brightness-110">
                     <RefreshCw size={15} /> Réessayer le paiement en ligne
                   </button>
@@ -184,7 +208,7 @@ export default async function PayPage({ params }: { params: Promise<{ id  : stri
               </Link>
             </div>
             <div className="mt-8 rounded-3xl border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-              <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowPricesForSite(site.category, sitePlanPrice("essentiel", site.category).monthly)} manual={manualOn} />
+              <PayForm siteId={site.id} prices={{ essentiel: sitePlanPrice("essentiel", site.category) }} online={chariowPricesForSite(site.category, sitePlanPrice("essentiel", site.category).monthly)} manual={manualOn} defaultPhone={defaultPhone} />
             </div>
           </>
         )}

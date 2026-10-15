@@ -342,17 +342,19 @@ export async function markNotificationsReadAction() {
 // Le client est redirigé vers la page de paiement Chariow ; le Pulse
 // (/api/pulse) confirme puis active l'abonnement automatiquement.
 // Crée le paiement « en ligne » en attente + la session Chariow, puis renvoie vers leur page.
-async function startChariowCheckout(site: NonNullable<ReturnType<typeof getSiteById>>, user: { id: number; name: string; email: string | null; phone: string | null }, plan: string, months: number): Promise<FormState> {
+async function startChariowCheckout(site: NonNullable<ReturnType<typeof getSiteById>>, user: { id: number; name: string; email: string | null; phone: string | null }, plan: string, months: number, payerPhone?: string): Promise<FormState> {
   // Prix mensuel de ce site (Essentiel varie selon la catégorie) → bon produit Chariow
   const product = chariowProductFor(plan, months, monthlyPrice(plan, site.category), site.category);
   if (!product) return { error: "Paiement en ligne indisponible pour cette offre : payez par Orange Money ci-dessous." };
 
-  // Téléphone du client : préfixe international (+XX) → pays détecté automatiquement.
-  // Un numéro local (sans +) est interprété comme centrafricain — marché principal.
-  const rawPhone = user.phone || site.data.contact?.whatsapp || site.data.contact?.phone || "";
+  // Numéro Mobile Money à débiter : celui saisi au checkout en priorité — le
+  // client peut payer avec le compte d'un tiers (conjoint, employé…), pas
+  // forcément le WhatsApp du site ni le téléphone du compte.
+  // Préfixe international (+XX) → pays détecté ; sinon interprété comme centrafricain.
+  const rawPhone = (payerPhone ?? "").trim() || user.phone || site.data.contact?.whatsapp || site.data.contact?.phone || "";
   const parsed = parsePhoneNumberFromString(rawPhone, "CF");
   if (rawPhone && (!parsed || !parsed.isPossible()))
-    return { error: "Le numéro de téléphone de votre compte semble invalide : vérifiez-le dans « Compte » ou payez par transfert ci-dessous." };
+    return { error: "Le numéro à débiter semble invalide (ex : 72 00 00 00). Vérifiez-le ou payez par transfert ci-dessous." };
 
   // Montant réel : le prix courant chez Chariow (il peut changer sans toucher au .env)
   const amount = (await fetchProductPrice(product.id)) ?? product.price;
@@ -361,6 +363,7 @@ async function startChariowCheckout(site: NonNullable<ReturnType<typeof getSiteB
     site_id: site.id, user_id: user.id, plan, months,
     amount, method: "chariow",
     payer: user.email ?? user.phone ?? user.name,
+    payer_phone: parsed?.nationalNumber ?? rawPhone.replace(/\D/g, ""),
   });
 
   let checkoutUrl: string;
@@ -393,10 +396,14 @@ export async function payOnline(_: FormState, form: FormData): Promise<FormState
   const site = await ownSite(Number(form.get("site_id") ?? 0));
   const plan = String(form.get("plan") ?? "");
   const months = Math.max(1, Math.min(24, Number(form.get("months") ?? 1)));
+  // Numéro à débiter : saisi par le client dans le formulaire en ligne
+  const payerPhone = String(form.get("payer_phone") || "").trim();
+  if (!PHONE_OK(payerPhone))
+    return { error: "Entrez le numéro Mobile Money à débiter (ex : 72 00 00 00)." };
   // Un paiement déjà en attente (manuel ou en ligne) bloque un nouvel essai
   if (getDb().prepare("SELECT 1 FROM payments WHERE site_id = ? AND status = 'en_attente'").get(site.id))
     return { error: "Un paiement est déjà en cours de vérification." };
-  return startChariowCheckout(site, user, plan, months);
+  return startChariowCheckout(site, user, plan, months, payerPhone);
 }
 
 // Réessayer après un paiement en ligne resté en attente : l'ancienne tentative
@@ -407,9 +414,16 @@ export async function retryOnlinePayment(form: FormData) {
   const pay = getPayment(Number(form.get("payment_id") ?? 0));
   const site = pay ? getSiteById(pay.site_id) : null;
   if (!pay || !site || (site.user_id !== user.id && !isAdmin(user))) redirect("/dashboard");
+  // Le client peut corriger le numéro à débiter à la relance ; sinon on reprend
+  // celui de la tentative précédente (enregistré sur le paiement).
+  const submitted = String(form.get("payer_phone") || "").trim();
+  const payerPhone = PHONE_OK(submitted) ? submitted : pay.payer_phone || undefined;
   if (pay.status === "en_attente" && pay.method === "chariow")
     setPaymentStatus(pay.id, "refuse", "Tentative relancée par le client");
-  await startChariowCheckout(site, user, pay.plan, pay.months);
+  const res = await startChariowCheckout(site, user, pay.plan, pay.months, payerPhone);
+  // Sans redirection vers Chariow (produit absent, numéro invalide…) : retour
+  // à la page de paiement pour afficher l'état réel plutôt qu'un écran figé.
+  if (res) redirect(`/payer/${site.id}`);
 }
 
 // Basculer vers le transfert manuel : le paiement en ligne en attente est

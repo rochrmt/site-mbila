@@ -186,6 +186,8 @@ export function getDb() {
   // Paiement en ligne (Chariow) : 'manuel' (capture Orange Money) | 'chariow'
   try { db.exec("ALTER TABLE payments ADD COLUMN method TEXT NOT NULL DEFAULT 'manuel'"); } catch { /* déjà présente */ }
   try { db.exec("ALTER TABLE payments ADD COLUMN external_ref TEXT NOT NULL DEFAULT ''"); } catch { /* déjà présente */ }
+  // Numéro Mobile Money débité en ligne (saisi par le client au checkout)
+  try { db.exec("ALTER TABLE payments ADD COLUMN payer_phone TEXT NOT NULL DEFAULT ''"); } catch { /* déjà présente */ }
   // Déduplication des webhooks Chariow (Pulses) — une livraison = une seule fois
   db.exec(`
     CREATE TABLE IF NOT EXISTS pulse_events (
@@ -751,13 +753,13 @@ export type PaymentStatus = "en_attente" | "confirme" | "refuse";
 export type Payment = {
   id: number; site_id: number; user_id: number | null; plan: string; months: number; amount: number;
   proof: string; payer: string; status: PaymentStatus; note: string; created_at: string;
-  method: string; external_ref: string;
+  method: string; external_ref: string; payer_phone: string;
 };
 
-export function addPayment(p: { site_id: number; user_id: number | null; plan: string; months?: number; amount: number; proof?: string; payer?: string; method?: string; external_ref?: string }) {
+export function addPayment(p: { site_id: number; user_id: number | null; plan: string; months?: number; amount: number; proof?: string; payer?: string; method?: string; external_ref?: string; payer_phone?: string }) {
   const r = getDb()
-    .prepare("INSERT INTO payments (site_id, user_id, plan, months, amount, proof, payer, method, external_ref) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-    .run(p.site_id, p.user_id, p.plan, p.months ?? 1, p.amount, p.proof ?? "", p.payer ?? "", p.method ?? "manuel", p.external_ref ?? "");
+    .prepare("INSERT INTO payments (site_id, user_id, plan, months, amount, proof, payer, method, external_ref, payer_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .run(p.site_id, p.user_id, p.plan, p.months ?? 1, p.amount, p.proof ?? "", p.payer ?? "", p.method ?? "manuel", p.external_ref ?? "", p.payer_phone ?? "");
   return Number(r.lastInsertRowid);
 }
 

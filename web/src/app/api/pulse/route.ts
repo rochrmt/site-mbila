@@ -15,6 +15,24 @@ function saleRef(p: PulsePayload) {
   return String(p?.data?.sale?.id ?? p?.sale?.id ?? "");
 }
 
+// Motif d'un échec/abandon : la structure exacte du payload n'est pas documentée,
+// on cherche donc une clé plausible (reason, error, message…) portant une valeur
+// texte courte — à chaque niveau d'objet, profondeur limitée.
+const REASON_KEY = /reason|fail|error|message|declin|reject|status_detail|detail/i;
+function failureDetail(p: unknown, depth = 0): string {
+  if (!p || typeof p !== "object" || depth > 4) return "";
+  const entries = Object.entries(p as Record<string, unknown>);
+  for (const [k, v] of entries) {
+    if (REASON_KEY.test(k) && typeof v === "string" && v.trim() && v.length <= 200)
+      return `${k} : ${v.trim()}`;
+  }
+  for (const [, v] of entries) {
+    const r = failureDetail(v, depth + 1);
+    if (r) return r;
+  }
+  return "";
+}
+
 // Webhook Chariow (« Pulse ») : activation automatique de l'abonnement après paiement en ligne.
 // Sécurité : signature HMAC obligatoire (un POST forgé = 401) + déduplication des livraisons.
 export async function POST(req: Request) {
@@ -58,8 +76,19 @@ export async function POST(req: Request) {
     if (payment.user_id) notify(payment.user_id, "✅ Paiement confirmé : votre site est en ligne !", `/payer/${payment.site_id}`);
     notifyAdmins(`💳 Paiement en ligne confirmé : ${payment.amount.toLocaleString("fr-FR")} F (Chariow)`, "/admin/paiements");
   } else if (event === "failed.sale" || event === "abandoned.sale") {
-    if (payment && payment.status === "en_attente")
-      setPaymentStatus(payment.id, "refuse", `Paiement en ligne ${event === "failed.sale" ? "échoué" : "abandonné"} (Chariow)`);
+    if (payment && payment.status === "en_attente") {
+      // Motif exact envoyé par Chariow s'il est présent (ex. solde insuffisant) —
+      // indispensable pour diagnostiquer pourquoi un numéro est refusé.
+      const why = failureDetail(payload);
+      console.log(`[pulse] ${event} paiement #${payment.id} (vente ${saleRef(payload) || "?"})${why ? ` — ${why}` : ""}`);
+      setPaymentStatus(
+        payment.id,
+        "refuse",
+        `Paiement en ligne ${event === "failed.sale" ? "échoué" : "abandonné"} (Chariow${why ? ` — ${why}` : ""})`,
+      );
+      if (payment.user_id)
+        notify(payment.user_id, "Le paiement en ligne n'a pas abouti — vous pouvez réessayer avec un autre numéro ou payer par transfert.", `/payer/${payment.site_id}`);
+    }
   }
 
   return NextResponse.json({ ok: true });

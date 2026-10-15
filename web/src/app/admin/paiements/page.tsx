@@ -64,9 +64,16 @@ export default async function AdminPayments() {
                 <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-fuchsia-200">{planLabel(p.plan, p.months)}</span>
                 <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-white/80">{price(p.amount)}</span>
                 {p.method === "chariow" ? (
-                  <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-                    ⚡ en ligne{p.external_ref ? ` · ${p.external_ref}` : ""}
-                  </span>
+                  <>
+                    <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+                      ⚡ en ligne{p.external_ref ? ` · ${p.external_ref}` : ""}
+                    </span>
+                    {p.payer_phone && (
+                      <span className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1 text-xs font-semibold text-white/70">
+                        n° débité : {p.payer_phone}
+                      </span>
+                    )}
+                  </>
                 ) : p.payer ? (
                   <span className="flex items-center gap-1.5 rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-200">
                     <MessageCircle size={12} /> payé depuis : {p.payer}
@@ -94,6 +101,7 @@ export default async function AdminPayments() {
                   </span>
                 )}
               </div>
+              {p.note && <p className="mt-3 text-xs leading-relaxed text-white/40">{p.note}</p>}
             </div>
           );
         })}

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import { Check, Copy, Loader2, Zap } from "lucide-react";
+import { Check, Copy, Loader2, Smartphone, Zap } from "lucide-react";
 import { payOnline } from "@/app/actions";
 import { DURATIONS, PLANS, planLabel, totalFor, type PlanId } from "@/lib/pricing";
 import { PHONE_OK } from "@/lib/validation";
@@ -20,11 +20,12 @@ const input =
 // Paiement en 3 étapes (comme le wizard de création) : offre → transfert
 // Orange Money → « j'ai payé ». Validation manuelle côté admin.
 // Le paiement en ligne (Chariow) est proposé quand l'offre a un produit associé.
-export default function PayForm({ siteId, prices, onDone, online, manual = true }: { siteId: number; prices: Prices; onDone?: () => void; online?: OnlineProducts; manual?: boolean }) {
+export default function PayForm({ siteId, prices, onDone, online, manual = true, defaultPhone = "" }: { siteId: number; prices: Prices; onDone?: () => void; online?: OnlineProducts; manual?: boolean; defaultPhone?: string }) {
   const [step, setStep] = useState(0);
   const [plan, setPlan] = useState<PlanId>("essentiel");
   const [months, setMonths] = useState(1);
   const [payer, setPayer] = useState("");
+  const [payPhone, setPayPhone] = useState(defaultPhone); // numéro Mobile Money débité en ligne
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -130,6 +131,26 @@ export default function PayForm({ siteId, prices, onDone, online, manual = true 
               <input type="hidden" name="site_id" value={siteId} />
               <input type="hidden" name="plan" value={plan} />
               <input type="hidden" name="months" value={months} />
+              <label htmlFor="payer_phone" className="flex items-center gap-1.5 text-xs font-semibold text-white/70">
+                <Smartphone size={13} className="text-emerald-300" /> Numéro Mobile Money à débiter
+              </label>
+              <input
+                id="payer_phone"
+                name="payer_phone"
+                value={payPhone}
+                onChange={(e) => setPayPhone(e.target.value)}
+                inputMode="tel"
+                required
+                placeholder="Ex : 72 00 00 00"
+                className={`${input} mt-1.5 ${payPhone && !PHONE_OK(payPhone) ? "border-red-400/60" : ""}`}
+              />
+              {payPhone && !PHONE_OK(payPhone) ? (
+                <p className="mt-1.5 text-[11px] text-red-300">Format attendu : 7 à 15 chiffres (ex : 72 67 91 75)</p>
+              ) : (
+                <p className="mt-1.5 text-[11px] leading-relaxed text-white/40">
+                  La demande de paiement sera envoyée sur ce numéro — ce peut être un autre compte que le WhatsApp du site.
+                </p>
+              )}
               <button
                 disabled={onlineBusy}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
