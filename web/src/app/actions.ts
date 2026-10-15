@@ -62,7 +62,6 @@ async function sendVerificationEmail(userId: number, email: string, name?: strin
      <p>Bonjour ${nameSafe || "et bienvenue"},</p>
      <p>Votre compte Mbila est créé ! Un dernier clic pour l'activer :</p>
      <p style="text-align:center;margin:28px 0"><a href="${link}" style="background:#d946ef;color:#fff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700">Activer mon compte</a></p>
-     <p style="color:#666;font-size:13px">Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br><a href="${link}" style="color:#9333ea;word-break:break-all">${link}</a></p>
      <p style="color:#666;font-size:13px">Ce lien est valable 24 h et à usage unique. Si vous n'avez pas créé de compte Mbila, ignorez simplement cet email.</p>
      <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
      <p style="color:#999;font-size:12px">Mbila · créez votre site web en 2 minutes · ${domain}</p>`,
