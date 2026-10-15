@@ -10,8 +10,8 @@ export type PlanId = (typeof PLANS)[number]["id"];
 // Tarif Essentiel par type d'activité (choisi au wizard) — le client ne voit
 // que SON prix. Les sites pro/B2B et l'hôtellerie coûtent plus cher.
 const PRICE_BY_CATEGORY: Record<string, number> = {
-  portfolio: 3000,
-  hotel: 8500,          // hôtels, auberges, résidences
+  portfolio: 4000,
+  hotel: 9500,          // hôtels, auberges, résidences
   legal: 7500,          // cabinets, avocats, notaires
   medical: 7500,        // cliniques, pharmacies
   consulting: 7500,     // conseil, entreprises, prestations
