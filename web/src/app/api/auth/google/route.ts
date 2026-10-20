@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { appUrl } from "@/lib/config";
 import { googleAuthUrl, googleConfigured, newGoogleState } from "@/lib/google";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 // `next` = chemin interne de retour (ex. /payer/12) véhiculé dans le state.
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  if (!googleConfigured()) return NextResponse.redirect(new URL("/connexion?err=google_off", url));
+  if (!googleConfigured()) return NextResponse.redirect(appUrl("/connexion?err=google_off"));
 
   const raw = url.searchParams.get("next") ?? "/dashboard";
   const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
