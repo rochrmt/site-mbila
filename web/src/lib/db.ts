@@ -149,6 +149,8 @@ export function getDb() {
   try { db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1"); } catch { /* déjà présente */ }
   // Compte bloqué par l'admin (abus, fraude…) : connexion et sessions coupées
   try { db.exec("ALTER TABLE users ADD COLUMN blocked INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà présente */ }
+  // Identifiant Google (sub OIDC) pour la connexion « Continuer avec Google »
+  try { db.exec("ALTER TABLE users ADD COLUMN google_id TEXT"); } catch { /* déjà présente */ }
   db.exec(`
     CREATE TABLE IF NOT EXISTS email_tokens (
       token TEXT PRIMARY KEY,           -- sha256 du jeton envoyé par email
@@ -234,7 +236,7 @@ export function getDb() {
 }
 
 export type Profile = "etudiant" | "particulier" | "entreprise";
-export type User = { id: number; name: string; email: string | null; phone: string | null; profile: Profile; must_change?: boolean; email_verified?: number | boolean; blocked?: number };
+export type User = { id: number; name: string; email: string | null; phone: string | null; profile: Profile; must_change?: boolean; email_verified?: number | boolean; blocked?: number; google_id?: string | null };
 
 // ── Identifiants & sécurité du compte ────────────────────────────
 // L'identifiant de connexion est l'email (le téléphone reste pour les anciens comptes)
@@ -291,6 +293,32 @@ export function setUserBlocked(id: number, blocked: boolean) {
 // partent en cascade (FK ON DELETE CASCADE / SET NULL selon les tables).
 export function deleteUser(id: number) {
   getDb().prepare("DELETE FROM users WHERE id = ?").run(id);
+}
+
+// ── Connexion Google (OIDC) ─────────────────────────────────────
+const USER_COLS = "id, name, email, phone, profile, must_change, email_verified, blocked, google_id";
+
+export function getUserByGoogleId(sub: string) {
+  return getDb().prepare(`SELECT ${USER_COLS} FROM users WHERE google_id = ?`).get(sub) as (User & { google_id?: string }) | undefined;
+}
+
+export function getUserByEmail(email: string) {
+  return getDb().prepare(`SELECT ${USER_COLS} FROM users WHERE email = ?`).get(email.toLowerCase()) as (User & { google_id?: string }) | undefined;
+}
+
+// Attache un compte Google à un utilisateur existant (même email vérifié)
+export function linkGoogleId(id: number, sub: string) {
+  getDb().prepare("UPDATE users SET google_id = ? WHERE id = ?").run(sub, id);
+}
+
+// Compte créé via Google : email déjà vérifié par Google, mot de passe
+// aléatoire injouable (l'utilisateur connecte toujours via Google ou en
+// pose un vrai plus tard s'il le souhaite).
+export function createGoogleUser(name: string, email: string, googleId: string, passwordHash: string) {
+  const r = getDb()
+    .prepare("INSERT INTO users (name, email, password, email_verified, google_id) VALUES (?, ?, ?, 1, ?)")
+    .run(name.slice(0, 80), email.toLowerCase(), passwordHash, googleId);
+  return Number(r.lastInsertRowid);
 }
 
 export type PasswordReset = {
