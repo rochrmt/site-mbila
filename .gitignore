@@ -9,3 +9,6 @@ shots/
 *.log
 Copilot_*.jpg
 nul
+/.env
+/.env.*
+!/.env.example

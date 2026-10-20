@@ -5,6 +5,7 @@ import { createSession, hashPassword } from "@/lib/auth";
 import { appUrl } from "@/lib/config";
 import { createGoogleUser, getUserByEmail, getUserByGoogleId, linkGoogleId } from "@/lib/db";
 import { googleConfigured, googleIdentity } from "@/lib/google";
+import { authAttempt, clientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,8 @@ export async function GET(req: Request) {
   const dest = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 
   if (!googleConfigured() || !code || !state || state !== saved) return back("google_state", dest);
+  if (!authAttempt(`google:callback:${clientIp(req)}`, 15, 60_000))
+    return new Response("Trop de tentatives. Réessayez plus tard.", { status: 429 });
 
   const g = await googleIdentity(code);
   if (!g) return back("google", dest);

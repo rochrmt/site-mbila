@@ -13,7 +13,7 @@ import {
 import { chariowProductFor, fetchProductPrice, initiateCheckout } from "@/lib/chariow";
 import { enrichSiteDataWithAi } from "@/lib/ai";
 import { notifyAdmin, sendUserMail } from "@/lib/mail";
-import { actionIp, rateLimit } from "@/lib/rateLimit";
+import { actionIp, authAttempt, authLimited, clearAuthAttempts, rateLimit } from "@/lib/rateLimit";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { EMAIL_OK, PHONE_OK } from "@/lib/validation";
 import { monthlyPrice } from "@/lib/pricing";
@@ -26,7 +26,7 @@ export type FormState = { error?: string; ok?: string } | undefined;
 
 // ── Authentification ─────────────────────────────────────────────
 export async function signup(_: FormState, form: FormData): Promise<FormState> {
-  if (!(await rateLimit(`signup:${await actionIp()}`, 5, 60_000))) return { error: "Trop de tentatives. Réessayez dans une minute." };
+  if (!authAttempt(`signup:${await actionIp()}`, 5, 600_000)) return { error: "Trop de tentatives. Réessayez plus tard." };
   const name = String(form.get("name") || "").trim();
   const identifier = String(form.get("identifier") || "").trim();
   const password = String(form.get("password") || "");
@@ -107,15 +107,27 @@ function findUserByIdentifier(identifier: string): IdentRow[] {
 }
 
 export async function login(_: FormState, form: FormData): Promise<FormState> {
-  // Anti brute-force : 5 essais/min par IP + par identifiant ciblé
+  // Anti brute-force : 5 essais/min + 40/heure par IP, persistant en SQLite
   const ip = await actionIp();
-  const identifier = String(form.get("identifier") || "").trim();
-  if (!(await rateLimit(`login:${ip}`, 5, 60_000)) || !(await rateLimit(`login:${identifier.toLowerCase()}`, 10, 60_000)))
-    return { error: "Trop de tentatives. Réessayez dans une minute." };
+  if (!authAttempt(`login:ip:minute:${ip}`, 5, 60_000) || !authAttempt(`login:ip:hour:${ip}`, 40, 3_600_000))
+    return { error: "Trop de tentatives. Réessayez plus tard." };
+  const identifier = String(form.get("identifier") || "").trim().slice(0, 120);
   const password = String(form.get("password") || "");
-  const u = findUserByIdentifier(identifier).find((r) => verifyPassword(password, r.password));
-  if (!u) return { error: "Identifiant ou mot de passe incorrect." };
+  if (!identifier || !password || password.length > 1024) return { error: "Identifiant ou mot de passe incorrect." };
+  const candidates = findUserByIdentifier(identifier);
+  const target = candidates.length === 1 ? `login:user:${candidates[0].id}` : `login:identifier:${identifier.toLowerCase()}`;
+  const short = `${target}:15m`;
+  const daily = `${target}:day`;
+  if (authLimited(short, 8) || authLimited(daily, 25))
+    return { error: "Trop de tentatives. Réessayez plus tard." };
+  const u = candidates.find((r) => verifyPassword(password, r.password));
+  if (!u) {
+    authAttempt(short, 8, 900_000);
+    authAttempt(daily, 25, 86_400_000);
+    return { error: "Identifiant ou mot de passe incorrect." };
+  }
   if (u.blocked) return { error: "Ce compte est suspendu. Contactez-nous sur WhatsApp pour le faire réactiver." };
+  clearAuthAttempts(short, daily);
   // Compte dont l'email n'est pas encore vérifié → session courte (24 h), pas 30 jours
   await createSession(u.id, u.email && !u.email_verified ? UNVERIFIED_AGE : undefined);
   redirect(safeNext(form.get("next"), "/dashboard"));
@@ -170,7 +182,7 @@ export async function requestAccountRecovery(_: FormState, form: FormData): Prom
   if (String(form.get("website") || "")) return OK;
   const ip = await actionIp();
   // Anti-spam : 3 demandes/heure/IP max, peu importe le compte visé
-  if (!(await rateLimit(`recup:${ip}`, 3, 3_600_000))) return OK;
+  if (!authAttempt(`recup:${ip}`, 3, 3_600_000)) return OK;
   const identifier = String(form.get("identifier") || "").trim().slice(0, 120);
   const contact = String(form.get("contact") || "").trim().slice(0, 60);
   const message = String(form.get("message") || "").trim().slice(0, 500);

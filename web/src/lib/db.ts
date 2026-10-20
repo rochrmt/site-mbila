@@ -231,6 +231,12 @@ export function getDb() {
       status TEXT NOT NULL DEFAULT 'en_attente',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS auth_limits (
+      key TEXT PRIMARY KEY,
+      hits INTEGER NOT NULL,
+      reset_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_auth_limits_reset ON auth_limits(reset_at);
   `);
   return db;
 }
