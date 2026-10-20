@@ -101,20 +101,31 @@ export async function uploadStockImages(form: FormData) {
   const dir = path.join(DATA_DIR, "uploads", "stock");
   await fs.mkdir(dir, { recursive: true });
   let count = 0;
-  for (const f of files.slice(0, 20)) {
-    if (!IMG_TYPES.has(f.type) || f.size > IMG_MAX) continue;
-    const name = `${crypto.randomBytes(8).toString("hex")}.webp`;
-    const img = sharp(Buffer.from(await f.arrayBuffer())).rotate();
-    const meta = await img.metadata();
-    await img
-      .resize({ width: 1600, withoutEnlargement: true })
-      .webp({ quality: 78 })
-      .toFile(path.join(dir, name));
-    addStockImage({ category, src: `/s/${name}`, alt: f.name.replace(/\.[^.]+$/, ""), w: meta.width ?? 1600, h: meta.height ?? 1200 });
-    count++;
+  let rejected = 0;
+  const batch = files.slice(0, 40);
+  // Lots parallèles : un fichier illisible est compté comme refusé sans casser le reste
+  for (let i = 0; i < batch.length; i += 4) {
+    await Promise.all(
+      batch.slice(i, i + 4).map(async (f) => {
+        if (!IMG_TYPES.has(f.type) || f.size > IMG_MAX) return rejected++;
+        const name = `${crypto.randomBytes(8).toString("hex")}.webp`;
+        try {
+          const img = sharp(Buffer.from(await f.arrayBuffer())).rotate();
+          const meta = await img.metadata();
+          await img
+            .resize({ width: 1600, withoutEnlargement: true })
+            .webp({ quality: 78 })
+            .toFile(path.join(dir, name));
+          addStockImage({ category, src: `/s/${name}`, alt: f.name.replace(/\.[^.]+$/, ""), w: meta.width ?? 1600, h: meta.height ?? 1200 });
+          count++;
+        } catch {
+          rejected++;
+        }
+      }),
+    );
   }
   revalidatePath("/admin/images");
-  return count ? { ok: true, count } : { error: "Formats acceptés : JPG, PNG, WebP (10 Mo max)." };
+  return count ? { ok: true, count, rejected } : { error: "Formats acceptés : JPG, PNG, WebP (10 Mo max)." };
 }
 
 export async function removeStockImage(id: number) {

@@ -8,6 +8,8 @@ import { clientIp, rateLimit } from "@/lib/rateLimit";
 
 const MAX = 8 * 1024 * 1024;
 const TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+const PER_REQUEST = 24; // fichiers par envoi (compressés côté client → ~300 Ko chacun)
+const PARALLEL = 4; // conversions sharp simultanées (RAM raisonnable)
 
 // Upload d'images utilisateur : redimensionnées + converties en WebP,
 // stockées dans DATA_DIR/uploads/<userId>/, servies via /u/<userId>/<fichier>.
@@ -24,20 +26,29 @@ export async function POST(req: Request) {
   await fs.mkdir(dir, { recursive: true });
 
   const urls: string[] = [];
-  for (const f of files.slice(0, 12)) {
-    if (!TYPES.has(f.type) || f.size > MAX) continue;
-    const name = `${crypto.randomBytes(8).toString("hex")}.webp`;
-    // sharp valide le VRAI contenu (pas le type déclaré) : tout fichier qui
-    // n'est pas une image décodable est ignoré sans casser le lot.
-    try {
-      await sharp(Buffer.from(await f.arrayBuffer()))
-        .rotate()
-        .resize({ width: 1800, withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toFile(path.join(dir, name));
-      urls.push(`/u/${user.id}/${name}`);
-    } catch { /* contenu non-image → ignoré */ }
+  const rejected: string[] = [];
+  const batch = files.slice(0, PER_REQUEST);
+  // Traitement par lots parallèles : ~4× plus rapide qu'en séquentiel
+  // sharp valide le VRAI contenu (pas le type déclaré) : tout fichier qui
+  // n'est pas une image décodable est rejeté nommément, sans casser le lot.
+  for (let i = 0; i < batch.length; i += PARALLEL) {
+    await Promise.all(
+      batch.slice(i, i + PARALLEL).map(async (f) => {
+        if (!TYPES.has(f.type) || f.size > MAX) return rejected.push(f.name || "fichier");
+        const name = `${crypto.randomBytes(8).toString("hex")}.webp`;
+        try {
+          await sharp(Buffer.from(await f.arrayBuffer()))
+            .rotate()
+            .resize({ width: 1800, withoutEnlargement: true })
+            .webp({ quality: 80 })
+            .toFile(path.join(dir, name));
+          urls.push(`/u/${user.id}/${name}`);
+        } catch {
+          rejected.push(f.name || "fichier");
+        }
+      }),
+    );
   }
-  if (!urls.length) return Response.json({ error: "Formats acceptés : JPG, PNG, WebP (8 Mo max)" }, { status: 400 });
-  return Response.json({ urls });
+  if (!urls.length) return Response.json({ error: "Formats acceptés : JPG, PNG, WebP (8 Mo max)", rejected }, { status: 400 });
+  return Response.json({ urls, rejected });
 }

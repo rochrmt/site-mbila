@@ -15,6 +15,7 @@ import { FONT_PAIRS } from "@/templates/palettes";
 import { FONT_LABELS, FX_LIST, FX_PRESETS, HERO_TEXT_MODES, type HeroTextMode } from "@/templates/fx";
 import ScaledFrame from "../ScaledFrame";
 import ImagePicker from "./ImagePicker";
+import { compressImage } from "@/lib/compress";
 
 type TplInfo = { id: string; name: string; description: string; palettes: string[]; fits: boolean; custom?: boolean };
 type PalInfo = { id: string; name: string; colors: string[] };
@@ -196,6 +197,7 @@ export default function Editor({
   async function cleanLogo(file?: File) {
     setLogoBusy(true);
     setLogoMsg("");
+    if (file) file = await compressImage(file); // une photo de 8 Mo → ~300 Ko avant envoi
     const res = file
       ? await fetch("/api/logo", { method: "POST", body: (() => { const fd = new FormData(); fd.append("file", file); return fd; })() })
       : await fetch("/api/logo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ src: d.logo }) });

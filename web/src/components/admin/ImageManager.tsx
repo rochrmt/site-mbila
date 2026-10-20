@@ -3,6 +3,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2, Lock, Trash2 } from "lucide-react";
 import { removeStockImage, uploadStockImages } from "@/app/admin/actions";
+import { compressImages } from "@/lib/compress";
 
 type Group = { key: string; label: string; builtin: string[]; custom: { id: number; src: string; alt: string }[] };
 
@@ -21,10 +22,13 @@ export default function ImageManager({ groups }: { groups: Group[] }) {
     setErr("");
     const fd = new FormData();
     fd.set("category", cat);
-    [...files].forEach((f) => fd.append("files", f));
+    (await compressImages(files)).forEach((f) => fd.append("files", f));
     const r = await uploadStockImages(fd);
     if ("error" in r && r.error) setErr(r.error);
-    else router.refresh();
+    else {
+      if ("rejected" in r && r.rejected) setErr(`${r.rejected} fichier(s) ignoré(s) — JPG, PNG ou WebP requis.`);
+      router.refresh();
+    }
     setBusy(false);
   }
 

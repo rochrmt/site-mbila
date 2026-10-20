@@ -14,6 +14,7 @@ import { FONT_LABELS, FX_LIST, FX_PRESETS, HERO_TEXT_MODES, type Fx, type HeroTe
 import { Rotator } from "@/templates/render/HeroRotator";
 import Logo from "../Logo";
 import { CAT_ICONS } from "./icons";
+import { uploadFiles } from "@/components/editor/ImagePicker";
 
 type Cat = { id: string; label: string; group: string; icon: string; search: string; cta: CtaType; preview: string[] };
 type Spec = { id: string; label: string; role: string; works: { name: string; tag: string }[] };
@@ -292,17 +293,19 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
     setStep((s) => s + 1);
   };
 
-  async function upload(files: FileList | null) {
+  async function upload(files: FileList | File[] | null) {
     if (!files?.length) return;
     setUploading(true);
     setErr("");
-    const fd = new FormData();
-    [...files].forEach((f) => fd.append("files", f));
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    const j = await res.json().catch(() => ({}));
+    try {
+      // Compression navigateur + envoi par lots : ~20× plus léger qu'un envoi brut
+      const r = await uploadFiles(files);
+      set({ uploads: [...(a.uploads ?? []), ...r.urls].slice(0, 12) });
+      if (r.rejected.length) setErr(`${r.rejected.length} fichier(s) ignoré(s) : ${r.rejected.slice(0, 3).join(", ")} (JPG, PNG ou WebP requis)`);
+    } catch (e) {
+      setErr((e as Error).message || "Échec de l'envoi");
+    }
     setUploading(false);
-    if (!res.ok) return setErr(j.error ?? "Échec de l'envoi");
-    set({ uploads: [...(a.uploads ?? []), ...j.urls].slice(0, 12) });
   }
 
   async function generate() {
@@ -573,12 +576,14 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
                 e.target.value = "";
                 if (!w || !f) return;
                 setUploading(true);
-                const fd = new FormData(); fd.append("files", f);
-                const res = await fetch("/api/upload", { method: "POST", body: fd });
-                const j = await res.json().catch(() => ({}));
+                try {
+                  const r = await uploadFiles([f]);
+                  if (r.urls[0]) set({ workImages: { ...(a.workImages ?? {}), [w]: r.urls[0] } });
+                  else setErr("Échec de l'envoi de la photo");
+                } catch (err) {
+                  setErr((err as Error).message || "Échec de l'envoi de la photo");
+                }
                 setUploading(false);
-                if (res.ok && j.urls?.[0]) set({ workImages: { ...(a.workImages ?? {}), [w]: j.urls[0] } });
-                else setErr(j.error ?? "Échec de l'envoi de la photo");
               }} />
             </div>
           )}
@@ -835,7 +840,11 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
               </button>
               <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => upload(e.target.files)} />
               {(a.images === "own" || needPhoto) && (
-                <div className="mt-6">
+                <div
+                  className="mt-6 rounded-2xl"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); upload(e.dataTransfer.files); }}
+                >
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
                     {a.uploads?.map((u) => (
                       <div key={u} className="group relative aspect-square overflow-hidden rounded-xl">
@@ -848,7 +857,7 @@ export default function Wizard({ user, categories, groups, domain, specs }: { us
                       {uploading ? <Loader2 className="animate-spin" /> : <ImagePlus />}
                     </button>
                   </div>
-                  <p className="mt-3 text-sm text-white/40">{isPortfolio ? "La 1re photo sera votre portrait en haut du site ; les suivantes illustrent vos projets. Nous complétons avec des photos pro si besoin." : "La 1re photo sera l'image principale. Nous complétons avec des photos pro si besoin."}</p>
+                  <p className="mt-3 text-sm text-white/40">{isPortfolio ? "La 1re photo sera votre portrait en haut du site ; les suivantes illustrent vos projets. Nous complétons avec des photos pro si besoin." : "La 1re photo sera l'image principale. Nous complétons avec des photos pro si besoin."} Vous pouvez aussi glisser vos images ici.</p>
                   {err && <p className="mt-2 text-sm text-red-300">{err}</p>}
                 </div>
               )}
