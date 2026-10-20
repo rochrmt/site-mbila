@@ -2,8 +2,8 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, CircleCheck, GalleryHorizontal, LayoutGrid, Trash2 } from "lucide-react";
-import { deleteSiteAdminAction, setSiteFeaturedAction, setSiteSuspendedAction } from "@/app/admin/actions";
+import { Ban, CircleCheck, GalleryHorizontal, Gift, LayoutGrid, Trash2 } from "lucide-react";
+import { deleteSiteAdminAction, grantFreeAccessAction, setSiteFeaturedAction, setSiteSuspendedAction } from "@/app/admin/actions";
 
 type Props = { siteId: number; siteName: string; suspended: boolean; published: boolean; inCarousel: boolean; inExamples: boolean };
 
@@ -19,6 +19,18 @@ export default function SiteActions({ siteId, siteName, suspended, published, in
       if (r?.error) alert(r.error);
       router.refresh();
     });
+  const grant = (days: number) => {
+    if (!window.confirm(`Mettre « ${siteName} » en ligne gratuitement pendant ${days} jours ?\nLe site sera accessible sans paiement, puis repassera hors ligne automatiquement.`)) return;
+    const fd = new FormData();
+    fd.set("site_id", String(siteId));
+    fd.set("days", String(days));
+    start(async () => {
+      const r = await grantFreeAccessAction(fd);
+      if (r?.error) alert(r.error);
+      else if (r?.until) alert(`Site en ligne jusqu'au ${new Date(r.until).toLocaleDateString("fr-FR")}.`);
+      router.refresh();
+    });
+  };
 
   return (
     <span className="flex flex-wrap items-center gap-2">
@@ -42,6 +54,24 @@ export default function SiteActions({ siteId, siteName, suspended, published, in
           <LayoutGrid size={12} /> {inExamples ? "Dans les exemples ✓" : "Exemples d'accueil"}
         </button>
       )}
+      <span className={`${pill} bg-emerald-500/15 text-emerald-300`}>
+        <Gift size={12} />
+        <select
+          disabled={pending}
+          defaultValue=""
+          title="Mettre le site en ligne sans paiement pour une durée limitée (offre, démo…)"
+          onChange={(e) => { const d = Number(e.target.value); e.target.value = ""; if (d) grant(d); }}
+          className="cursor-pointer appearance-none bg-transparent text-[11px] font-semibold outline-none [&>option]:bg-[#15151c] [&>option]:text-white"
+        >
+          <option value="" disabled>Accès offert…</option>
+          <option value="7">7 jours</option>
+          <option value="14">14 jours</option>
+          <option value="30">30 jours</option>
+          <option value="90">90 jours</option>
+          <option value="180">6 mois</option>
+          <option value="365">1 an</option>
+        </select>
+      </span>
       <button
         disabled={pending}
         title={suspended ? "Remettre le site en ligne" : "Mettre le site hors ligne sans le supprimer (impayé, abus…)"}

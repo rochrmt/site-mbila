@@ -859,6 +859,21 @@ export function confirmPayment(id: number) {
   updateSite(site.id, { paid_until: base.toISOString(), published: true, suspended: false });
 }
 
+// Activation offerte par l'admin : le site passe en ligne pour `days` jours
+// sans paiement — l'expiration automatique s'en charge ensuite (siteIsPaid).
+// Tracé comme paiement « offert » à 0 F dans /admin/paiements + notif client.
+export function grantFreeAccess(siteId: number, days: number, adminEmail: string) {
+  const site = getSiteById(siteId);
+  if (!site) return;
+  const base = site.paid_until && site.paid_until > new Date().toISOString() ? new Date(site.paid_until) : new Date();
+  base.setDate(base.getDate() + days);
+  updateSite(siteId, { paid_until: base.toISOString(), published: true, suspended: false });
+  const pid = addPayment({ site_id: siteId, user_id: site.user_id, plan: "offert", months: 0, amount: 0, method: "offert", payer: adminEmail });
+  setPaymentStatus(pid, "confirme", `Activation offerte ${days} j par ${adminEmail}`);
+  notify(site.user_id, `Bonne nouvelle : votre site « ${site.data.name} » est en ligne — accès offert pendant ${days} jours.`, "/dashboard");
+  return base.toISOString();
+}
+
 // Liste admin : paiements + site + client
 export function getPaymentsDetailed() {
   return (getDb().prepare(`

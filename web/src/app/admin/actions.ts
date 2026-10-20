@@ -13,7 +13,7 @@ import {
   addStockImage, confirmPayment, deleteCustomTemplate, deleteHostingRequest, deleteSite, deleteStockImage, getCustomDomain,
   getDb, getHostingRequest, getPayment, getSiteById, getUserById, HOSTING_STATUS, notify, saveCustomTemplate,
   adminResetPassword, getPasswordResets, manualPaymentEnabled, setCustomDomainStatus, setEmailVerified, setPasswordResetStatus, setPaymentStatus, setPlanPrice, setSetting, setSubdomainOff,
-  deleteUser, setUserBlocked,
+  deleteUser, grantFreeAccess, setUserBlocked,
   setSiteFeatured, updateHostingRequest, updateSite,
   type FeatureSlot, type HostingStatus,
 } from "@/lib/db";
@@ -110,6 +110,20 @@ export async function deleteUserAction(form: FormData) {
   try { await fs.rm(path.join(DATA_DIR, "uploads", String(id)), { recursive: true, force: true }); } catch { /* rien à nettoyer */ }
   revalidatePath("/admin/clients");
   return { ok: true };
+}
+
+// ── Activation offerte (site en ligne sans paiement, durée limitée) ──
+const FREE_DAYS = new Set([7, 14, 30, 90, 180, 365]);
+export async function grantFreeAccessAction(form: FormData) {
+  const admin = await requireAdmin();
+  const siteId = Number(form.get("site_id") ?? 0);
+  const days = Number(form.get("days") ?? 0);
+  if (!siteId || !FREE_DAYS.has(days)) return { error: "Paramètres invalides." };
+  const until = grantFreeAccess(siteId, days, admin.email ?? "admin");
+  if (!until) return { error: "Site introuvable." };
+  revalidatePath("/admin/clients");
+  revalidatePath("/admin/paiements");
+  return { ok: true, until };
 }
 
 // ── Images de la banque ─────────────────────────────────────────
