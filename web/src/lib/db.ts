@@ -147,6 +147,8 @@ export function getDb() {
   try { db.exec("ALTER TABLE users ADD COLUMN must_change INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà présente */ }
   // Vérification d'email à l'inscription — les comptes existants sont réputés vérifiés (défaut 1)
   try { db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1"); } catch { /* déjà présente */ }
+  // Compte bloqué par l'admin (abus, fraude…) : connexion et sessions coupées
+  try { db.exec("ALTER TABLE users ADD COLUMN blocked INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà présente */ }
   db.exec(`
     CREATE TABLE IF NOT EXISTS email_tokens (
       token TEXT PRIMARY KEY,           -- sha256 du jeton envoyé par email
@@ -232,7 +234,7 @@ export function getDb() {
 }
 
 export type Profile = "etudiant" | "particulier" | "entreprise";
-export type User = { id: number; name: string; email: string | null; phone: string | null; profile: Profile; must_change?: boolean; email_verified?: number | boolean };
+export type User = { id: number; name: string; email: string | null; phone: string | null; profile: Profile; must_change?: boolean; email_verified?: number | boolean; blocked?: number };
 
 // ── Identifiants & sécurité du compte ────────────────────────────
 // L'identifiant de connexion est l'email (le téléphone reste pour les anciens comptes)
@@ -270,7 +272,25 @@ export function adminResetPassword(id: number, hash: string) {
 }
 
 export function getUserById(id: number) {
-  return getDb().prepare("SELECT id, name, email, phone, profile, must_change, email_verified FROM users WHERE id = ?").get(id) as User | undefined;
+  return getDb().prepare("SELECT id, name, email, phone, profile, must_change, email_verified, blocked FROM users WHERE id = ?").get(id) as User | undefined;
+}
+
+// Bloquer : coupe toutes les sessions ouvertes + suspend les sites en ligne
+// (un compte abusif ne doit pas laisser ses sites publics accessibles).
+// Débloquer ne remet PAS les sites en ligne — l'admin les réactive au cas par cas.
+export function setUserBlocked(id: number, blocked: boolean) {
+  const db = getDb();
+  db.prepare("UPDATE users SET blocked = ? WHERE id = ?").run(blocked ? 1 : 0, id);
+  if (blocked) {
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").run(id);
+    db.prepare("UPDATE sites SET suspended = 1 WHERE user_id = ?").run(id);
+  }
+}
+
+// Supprimer un compte : sites, leads, paiements, sessions et notifications
+// partent en cascade (FK ON DELETE CASCADE / SET NULL selon les tables).
+export function deleteUser(id: number) {
+  getDb().prepare("DELETE FROM users WHERE id = ?").run(id);
 }
 
 export type PasswordReset = {
@@ -552,7 +572,7 @@ export function deleteStockImage(id: number) {
 export function getClients() {
   const rows = getDb()
     .prepare(
-      `SELECT u.id AS user_id, u.name, u.email, u.phone, u.email_verified, u.created_at AS user_since,
+      `SELECT u.id AS user_id, u.name, u.email, u.phone, u.email_verified, u.blocked, u.created_at AS user_since,
               s.id AS site_id, s.slug, s.published, s.suspended, s.paid_until, s.featured_carousel, s.featured_example,
               s.template_id, s.data, s.created_at AS site_created,
               (SELECT COUNT(*) FROM leads l WHERE l.site_id = s.id) AS leads
@@ -561,14 +581,14 @@ export function getClients() {
        ORDER BY u.id DESC, s.id DESC`,
     )
     .all() as {
-    user_id: number; name: string; email: string | null; phone: string | null; email_verified: number | null; user_since: string;
+    user_id: number; name: string; email: string | null; phone: string | null; email_verified: number | null; blocked: number | null; user_since: string;
     site_id: number | null; slug: string | null; published: number | null; suspended: number | null; paid_until: string | null;
     featured_carousel: number | null; featured_example: number | null;
     template_id: string | null; data: string | null; site_created: string | null; leads: number;
   }[];
 
   const clients = new Map<number, {
-    id: number; name: string; email: string | null; phone: string | null; emailVerified: boolean; since: string;
+    id: number; name: string; email: string | null; phone: string | null; emailVerified: boolean; blocked: boolean; since: string;
     sites: {
       id: number; slug: string; name: string; published: boolean; suspended: boolean; paidUntil: string | null;
       inCarousel: boolean; inExamples: boolean; templateId: string; created: string; leads: number;
@@ -578,7 +598,7 @@ export function getClients() {
   for (const r of rows) {
     let c = clients.get(r.user_id);
     if (!c) {
-      c = { id: r.user_id, name: r.name, email: r.email, phone: r.phone, emailVerified: !!r.email_verified, since: r.user_since, sites: [] };
+      c = { id: r.user_id, name: r.name, email: r.email, phone: r.phone, emailVerified: !!r.email_verified, blocked: !!r.blocked, since: r.user_since, sites: [] };
       clients.set(r.user_id, c);
     }
     if (r.site_id) {

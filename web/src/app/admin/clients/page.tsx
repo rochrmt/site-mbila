@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Download, ExternalLink, Globe, Mail, MessageSquareText, PencilLine } from "lucide-react";
 import { getClients } from "@/lib/db";
+import { isAdmin } from "@/lib/admin";
 import { siteUrl } from "@/lib/config";
 import { verifyUserEmailAction } from "@/app/admin/actions";
 import SiteActions from "@/components/admin/SiteActions";
+import UserActions from "@/components/admin/UserActions";
 
 const fmt = (iso: string) =>
   new Date(iso + "Z").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
@@ -30,6 +32,7 @@ export default async function AdminClients() {
                 <p className="truncate font-semibold">{c.name}</p>
                 <div className="flex items-center gap-1.5 text-xs text-white/45">
                   <Mail size={11} /> {c.email ?? `📱 ${c.phone}`}
+                  {c.blocked && <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">bloqué</span>}
                   {c.email && !c.emailVerified && <span className="rounded bg-amber-400/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-300">non vérifié</span>}
                   {c.email && !c.emailVerified && (
                     <form action={verifyUserEmailAction}>
@@ -41,7 +44,10 @@ export default async function AdminClients() {
                   )}
                 </div>
               </div>
-              <p className="ml-auto text-xs text-white/35">Inscrit le {fmt(c.since)}</p>
+              <div className="ml-auto flex flex-col items-end gap-2">
+                <p className="text-xs text-white/35">Inscrit le {fmt(c.since)}</p>
+                {!isAdmin({ email: c.email }) && <UserActions userId={c.id} name={c.name} sitesCount={c.sites.length} blocked={c.blocked} />}
+              </div>
             </div>
 
             {c.sites.length === 0 ? (

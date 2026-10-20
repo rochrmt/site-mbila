@@ -51,9 +51,11 @@ export const getUser = cache(async (): Promise<User | null> => {
   if (!token) return null;
   const row = getDb()
     .prepare(
-      "SELECT u.id, u.name, u.email, u.phone, u.profile, u.must_change, u.email_verified FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ? AND s.expires_at > ?",
+      "SELECT u.id, u.name, u.email, u.phone, u.profile, u.must_change, u.email_verified, u.blocked FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ? AND s.expires_at > ?",
     )
     .get(sha(token), Date.now()) as User | undefined;
+  // Compte bloqué par l'admin : la session est traitée comme absente
+  if (row?.blocked) return null;
   return row ?? null;
 });
 

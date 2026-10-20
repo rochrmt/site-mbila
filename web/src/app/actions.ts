@@ -91,18 +91,18 @@ const safeNext = (v: FormDataEntryValue | null, fallback: string) => {
 // Résolution d'un identifiant (email ou téléphone) :
 // 1) correspondance EXACTE — jamais de ligne au hasard (un suffixe vide matcherait tous les téléphones !)
 // 2) tolérance à l'indicatif pays : suffixe de ≥7 chiffres uniquement
-type IdentRow = { id: number; password: string; email: string | null; email_verified: number };
+type IdentRow = { id: number; password: string; email: string | null; email_verified: number; blocked: number };
 function findUserByIdentifier(identifier: string): IdentRow[] {
   const db = getDb();
   const exact = db
-    .prepare("SELECT id, password, email, email_verified FROM users WHERE (email IS NOT NULL AND email = ?) OR (phone IS NOT NULL AND phone = ?)")
-    .all(identifier.toLowerCase(), identifier.replace(/\D/g, "")) as { id: number; password: string; email: string | null; email_verified: number }[];
+    .prepare("SELECT id, password, email, email_verified, blocked FROM users WHERE (email IS NOT NULL AND email = ?) OR (phone IS NOT NULL AND phone = ?)")
+    .all(identifier.toLowerCase(), identifier.replace(/\D/g, "")) as IdentRow[];
   if (exact.length) return exact;
   const digits = identifier.replace(/\D/g, "");
   if (digits.length < 7) return [];
   return db
-    .prepare("SELECT id, password, email, email_verified FROM users WHERE phone IS NOT NULL AND (phone LIKE ? OR ? LIKE '%' || phone) LIMIT 5")
-    .all(`%${digits}`, digits) as { id: number; password: string; email: string | null; email_verified: number }[];
+    .prepare("SELECT id, password, email, email_verified, blocked FROM users WHERE phone IS NOT NULL AND (phone LIKE ? OR ? LIKE '%' || phone) LIMIT 5")
+    .all(`%${digits}`, digits) as IdentRow[];
 }
 
 export async function login(_: FormState, form: FormData): Promise<FormState> {
@@ -114,6 +114,7 @@ export async function login(_: FormState, form: FormData): Promise<FormState> {
   const password = String(form.get("password") || "");
   const u = findUserByIdentifier(identifier).find((r) => verifyPassword(password, r.password));
   if (!u) return { error: "Identifiant ou mot de passe incorrect." };
+  if (u.blocked) return { error: "Ce compte est suspendu. Contactez-nous sur WhatsApp pour le faire réactiver." };
   // Compte dont l'email n'est pas encore vérifié → session courte (24 h), pas 30 jours
   await createSession(u.id, u.email && !u.email_verified ? UNVERIFIED_AGE : undefined);
   redirect(safeNext(form.get("next"), "/dashboard"));

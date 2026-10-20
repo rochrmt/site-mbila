@@ -5,7 +5,7 @@ import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import sharp from "sharp";
-import { requireAdmin } from "@/lib/admin";
+import { isAdmin, requireAdmin } from "@/lib/admin";
 import { hashPassword } from "@/lib/auth";
 import { slugify } from "@/lib/config";
 import { DATA_DIR } from "@/lib/config";
@@ -13,6 +13,7 @@ import {
   addStockImage, confirmPayment, deleteCustomTemplate, deleteHostingRequest, deleteSite, deleteStockImage, getCustomDomain,
   getDb, getHostingRequest, getPayment, getSiteById, getUserById, HOSTING_STATUS, notify, saveCustomTemplate,
   adminResetPassword, getPasswordResets, manualPaymentEnabled, setCustomDomainStatus, setEmailVerified, setPasswordResetStatus, setPaymentStatus, setPlanPrice, setSetting, setSubdomainOff,
+  deleteUser, setUserBlocked,
   setSiteFeatured, updateHostingRequest, updateSite,
   type FeatureSlot, type HostingStatus,
 } from "@/lib/db";
@@ -84,6 +85,30 @@ export async function deleteTemplateAction(id: string) {
   if (!id.startsWith("c-")) return { error: "Les modèles intégrés ne peuvent pas être supprimés." };
   deleteCustomTemplate(id);
   revalidatePath("/admin/templates");
+  return { ok: true };
+}
+
+// ── Comptes clients : blocage / suppression ─────────────────────
+// Garde-fous : impossible d'agir sur un autre admin (ni soi-même).
+export async function setUserBlockedAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("user_id") ?? 0);
+  const target = getUserById(id);
+  if (!target || target.id === me.id || isAdmin(target)) return { error: "Action impossible sur ce compte." };
+  setUserBlocked(id, !target.blocked);
+  revalidatePath("/admin/clients");
+  return { ok: true };
+}
+
+export async function deleteUserAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("user_id") ?? 0);
+  const target = getUserById(id);
+  if (!target || target.id === me.id || isAdmin(target)) return { error: "Action impossible sur ce compte." };
+  deleteUser(id); // sites, leads, paiements, sessions… partent en cascade
+  // Nettoie le dossier d'uploads du compte — best effort, non bloquant
+  try { await fs.rm(path.join(DATA_DIR, "uploads", String(id)), { recursive: true, force: true }); } catch { /* rien à nettoyer */ }
+  revalidatePath("/admin/clients");
   return { ok: true };
 }
 
