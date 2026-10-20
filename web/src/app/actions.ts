@@ -11,6 +11,7 @@ import {
   setPaymentExternal, setPaymentStatus, siteIsPaid, slugTaken, undoSite as undoSiteDb, updateSite, updateUserEmail, updateUserPassword,
 } from "@/lib/db";
 import { chariowProductFor, fetchProductPrice, initiateCheckout } from "@/lib/chariow";
+import { enrichSiteDataWithAi } from "@/lib/ai";
 import { notifyAdmin, sendUserMail } from "@/lib/mail";
 import { actionIp, rateLimit } from "@/lib/rateLimit";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
@@ -211,6 +212,8 @@ export async function createFromAnswers(answers: Answers, rawSlug: string) {
   if (!s.ok) return { error: s.reason };
   const proposals = matchTemplates(answers);
   const data = generateSiteData(answers);
+  // Textes personnalisés par le modèle externe (silencieux si non configuré ou en panne)
+  await enrichSiteDataWithAi(data, answers);
   if (!data.contact.email) data.contact.email = user.email ?? "";
   const id = createSite({
     userId: user.id,
